@@ -40,6 +40,8 @@ namespace SosOnline;
 ///   --sosonline-titleoptions      open the game's Options from the title screen and log for 10 s (crash check)
 ///   --sosonline-titleflow         title choices shown again with Online open, then Online > Host > Start > a save (menu checks)
 ///   --sosonline-updatecheck       title screen: Online page, Check for updates; quits after 90 s
+///   --sosonline-fakeavailable=V   act as if the release lookup found V (the version line says "(Update available)")
+///   --sosonline-versionshot       title screen: screenshot ui-version with the co-op version line, then quit
 ///   --sosonline-popupanswer=L,... answer the mod's popups that offer one of these labels ("_" for a space)
 ///   --sosonline-npcprobe          log every frame the active NPCs and each NPC's first inactive ancestor change
 ///   --sosonline-summonprobe[=N]   log each summon's slot list, reservations and assignments; N > 0 draws N extra
@@ -118,6 +120,7 @@ internal static class TestHarness
             SaveMirror.MirrorFolder = "SosOnlineSession-steam";
         }
         if (Args.TryGetValue("fakeupdate", out var fu)) SosOnline.Update.AutoUpdate.FakeDownloaded(Version.Parse(fu));
+        if (Args.TryGetValue("fakeavailable", out var fa)) SosOnline.Update.AutoUpdate.FakeAvailable(Version.Parse(fa));
         if (Args.TryGetValue("delay", out var d)) Session.Instance.ConfiguredDelay = int.Parse(d);
         if (Args.TryGetValue("guests", out var g)) _guests = int.Parse(g);
         if (Args.TryGetValue("start", out var s)) _startSlot = s;
@@ -229,6 +232,20 @@ internal static class TestHarness
     private static int _tfStep;
     private static double _tfAt;
     private static int _ucStep;
+    private static int _vsStep;
+    private static double _vsAt;
+
+    /// <summary>--sosonline-versionshot: the title choices, a screenshot (ui-version), quit. Never opens a save.</summary>
+    private static void VersionShotTest()
+    {
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (_vsStep == 0) { if (!GameBridge.AtTitleScreen) return; _vsStep = 1; _vsAt = now + 5; return; }
+        if (now < _vsAt) return;
+        if (_vsStep == 1) { GameBridge.FindTitleScreen()?.ShowChoices(); _vsAt = now + 2; }
+        else if (_vsStep == 2) { Plugin.Log.LogInfo($"[test] version line: {UI.VersionLabel.Text}"); Shot("ui-version"); _vsAt = now + 1; }
+        else { Plugin.Log.LogInfo("[test] version shot done"); Application.Quit(); }
+        _vsStep++;
+    }
     private static double _ucAt;
     private static int _toStep;
     private static double _toAt;
@@ -291,6 +308,7 @@ internal static class TestHarness
         if (Args.ContainsKey("titleoptions")) TitleOptionsTest();
         UI.NativeMenus.TestAnswerTick();
         if (Args.ContainsKey("updatecheck")) UpdateCheckTest();
+        if (Args.ContainsKey("versionshot")) VersionShotTest();
         if (Args.ContainsKey("titleflow")) TitleFlowTest();
         if (Args.Count == 0 || _autoDone) return;
         var session = Session.Instance;
@@ -352,7 +370,7 @@ internal static class TestHarness
     }
 
     public static bool TraceEnabled => Args.ContainsKey("trace");
-    /// <summary>Started with any --sosonline-* flag (a test run): no automatic update.</summary>
+    /// <summary>Started with any --sosonline-* flag (a test run): no release lookup at start.</summary>
     public static bool HasArgs => Args.Count > 0;
 
     public static bool TryArg(string key, out string value) => Args.TryGetValue(key, out value);

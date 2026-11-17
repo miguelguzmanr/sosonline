@@ -1,25 +1,27 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-  Builds the plugin and packs it for players who don't build it themselves.
+  Builds the plugin and writes the zip players install, signed (nothing is uploaded; publish-release.ps1 does that).
 
 .DESCRIPTION
   Writes dist\SosOnline-<version>.zip with BepInEx\plugins\SosOnline\SosOnline.dll inside, and SosOnline.dll.sig next
   to it when the release signing key exists (%APPDATA%\SosOnline\release-signing-key.txt, see new-signing-key.ps1).
-  Automatic updates only install a signed DLL. Extract the zip into the game folder (after BepInEx is installed
+  The in-game updater only installs a signed DLL. Extract the zip into the game folder (after BepInEx is installed
   there) so the DLL lands in BepInEx\plugins\SosOnline. Everyone in a session needs the same build.
 
 .PARAMETER GameDir
-  Sea of Stars install folder with BepInEx and its interop assemblies (needed to build).
+  Sea of Stars install folder. Optional: tools\game-dir.ps1 finds it (SOS_GAME_DIR, game-dir.txt, or Steam's libraries).
+  It needs BepInEx and its interop assemblies (to build).
 #>
 param(
-    [string]$GameDir = "W:\SteamLibrary\steamapps\common\Sea of Stars"
+    [string]$GameDir
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+$GameDir = & "$PSScriptRoot\game-dir.ps1" -GameDir $GameDir
 
 if (-not (Test-Path "$GameDir\BepInEx\interop\Assembly-CSharp.dll")) {
-    throw "BepInEx interop assemblies are missing in '$GameDir'. Run tools\deploy.ps1 first."
+    throw "BepInEx interop assemblies are missing in '$GameDir'. Run tools\install-to-game.ps1 first."
 }
 
 dotnet build "$root\SosOnline\SosOnline.csproj" -c Release -p:GameDir="$GameDir" -p:DeployToGame=false
@@ -42,7 +44,7 @@ if (Test-Path $keyPath) {
     [IO.File]::WriteAllBytes("$plugin\SosOnline.dll.sig", $signature)
     Write-Host "Signed with $keyPath"
 } else {
-    Write-Warning "No signing key at ${keyPath}: this zip can't be installed by automatic updates."
+    Write-Warning "No signing key at ${keyPath}: the in-game updater won't install this zip."
 }
 
 $zip = Join-Path $root "dist\SosOnline-$version.zip"

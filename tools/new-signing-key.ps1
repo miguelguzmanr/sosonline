@@ -4,10 +4,10 @@
   Creates the key that signs released builds (run once).
 
 .DESCRIPTION
-  The game only installs an automatic update whose DLL is signed with this key. The private key is written to
+  The in-game updater only installs a DLL signed with this key. The private key is written to
   %APPDATA%\SosOnline\release-signing-key.txt (outside the repository: never commit it, keep a backup). The public key
   is printed: paste it into SosOnline\Update\AutoUpdate.cs (PublicKey) and release a build with it before relying on
-  automatic updates. Losing the private key means players have to install the next build by hand.
+  the in-game updater. Losing the private key means players have to install the next build by hand.
 #>
 param([switch]$Force)
 $ErrorActionPreference = "Stop"

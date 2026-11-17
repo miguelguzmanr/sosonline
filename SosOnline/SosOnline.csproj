@@ -18,8 +18,11 @@
     <!-- The commit is appended to the informational version ("0.1.0+e3d3ca0"): logs and the join handshake show it. -->
     <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
 
-    <!-- Override with: dotnet build -p:GameDir="D:\Path\To\Sea of Stars" -->
-    <GameDir Condition="'$(GameDir)' == ''">W:\SteamLibrary\steamapps\common\Sea of Stars</GameDir>
+    <!-- The game folder: -p:GameDir="D:\Path\To\Sea of Stars", else the SOS_GAME_DIR environment variable, else
+         game-dir.txt in the repository root (gitignored; tools\game-dir.ps1 writes it, from Steam's libraries). -->
+    <GameDirFile>$(MSBuildThisFileDirectory)..\game-dir.txt</GameDirFile>
+    <GameDir Condition="'$(GameDir)' == ''">$(SOS_GAME_DIR)</GameDir>
+    <GameDir Condition="'$(GameDir)' == '' And Exists('$(GameDirFile)')">$([System.IO.File]::ReadAllText('$(GameDirFile)').Trim())</GameDir>
     <BepInExCore>$(GameDir)\BepInEx\core</BepInExCore>
     <Interop>$(GameDir)\BepInEx\interop</Interop>
     <!-- Copy the built plugin into the game after each build (set to false to disable). -->
@@ -79,6 +82,11 @@
       <SourceRevisionId Condition="'$(_GitCommit)' != ''">$(_GitCommit)</SourceRevisionId>
       <SourceRevisionId Condition="'$(_GitCommit)' != '' and '$(_GitDirty)' != ''">$(_GitCommit)-modified</SourceRevisionId>
     </PropertyGroup>
+  </Target>
+
+  <Target Name="CheckGameDir" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="'$(GameDir)' == '' Or !Exists('$(GameDir)\SeaOfStars.exe')"
+           Text="Sea of Stars folder not found ('$(GameDir)'). Run tools\game-dir.ps1 once (it finds the game in Steam's libraries and writes game-dir.txt), or pass -p:GameDir=..., or set SOS_GAME_DIR." />
   </Target>
 
   <Target Name="DeployPlugin" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">

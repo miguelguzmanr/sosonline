@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Maps the game's timed-hit grading: one solo run per press offset (frames relative to a reference frame),
 # 4 instances at a time. Usage: battle-map.sh DELAY REF_FRAME "offsets..."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"
+. "$(dirname "$0")/game-dir.sh"
 OUT="$GAME/BepInEx/SosOnline/map"; mkdir -p "$OUT"
 DELAY=$1; REF=$2; OFFSETS=$3; SCRIPTS="$(cd "$(dirname "$0")" && pwd -W)/scripts"
 port=27200; batch=0

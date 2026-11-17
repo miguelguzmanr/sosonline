@@ -5,7 +5,7 @@
 # 150-300 ms more). Prints both PCs' turn decisions side by side and the first state snapshot that differs.
 # Usage: tests/battle-turns.sh [extra flags for both]   env: LAG JITTER SPIKES SWITCH QUIT ENCOUNTER DELAY
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 NET="--sosonline-lag=${LAG:-20} --sosonline-jitter=${JITTER:-25} --sosonline-spikes=${SPIKES:-3}"
 COMMON="--sosonline-delay=${DELAY:-4} --sosonline-encounter=${ENCOUNTER:-1500} --sosonline-bot --sosonline-quit=${QUIT:-6000} $NET $*"

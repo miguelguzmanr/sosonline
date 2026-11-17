@@ -3,7 +3,7 @@
 # HOSTFLAGS goes to the host and guest 1, JOINFLAGS to the joiner. Prints the drop-in log lines and compares the
 # joiner's and guest 1's state logs with the host's from the joiner's first snapshot on.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 Q=${QUIT:-4200}
 COMMON="--sosonline-delay=3 --sosonline-quit=$Q"

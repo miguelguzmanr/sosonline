@@ -1,26 +1,27 @@
 <#
 .SYNOPSIS
-  Builds the Sea of Stars Online Co-op plugin and installs it into the game.
+  Builds the plugin and installs it into your own game folder (for development; nothing is released).
 
 .DESCRIPTION
   1. Installs BepInEx 6 (IL2CPP, x64) into the game folder if it is missing, after asking.
-  2. Builds SosOnline and copies it to BepInEx\plugins\SosOnline.
+  2. Builds SosOnline and copies it to BepInEx\plugins\SosOnline (a plain `dotnet build` of the project does this
+     step too).
   BepInEx has to run the game once to generate its interop assemblies before the plugin can build.
 
 .PARAMETER GameDir
-  Sea of Stars install folder.
+  Sea of Stars install folder. Optional: tools\game-dir.ps1 finds it (SOS_GAME_DIR, game-dir.txt, or Steam's libraries).
 
 .PARAMETER BepInExUrl
   BepInEx bleeding-edge build to install if BepInEx is missing.
 #>
 param(
-    [string]$GameDir = "W:\SteamLibrary\steamapps\common\Sea of Stars",
+    [string]$GameDir,
     [string]$BepInExUrl = "https://builds.bepinex.dev/projects/bepinex_be/793/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.793%2Bdbc82f0.zip"
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
-if (-not (Test-Path "$GameDir\SeaOfStars.exe")) { throw "SeaOfStars.exe not found in '$GameDir'. Pass -GameDir." }
+$GameDir = & "$PSScriptRoot\game-dir.ps1" -GameDir $GameDir
 
 if (-not (Test-Path "$GameDir\BepInEx\core\BepInEx.Unity.IL2CPP.dll")) {
     $answer = Read-Host "BepInEx is not installed in '$GameDir'. Download and install it from builds.bepinex.dev? (y/n)"

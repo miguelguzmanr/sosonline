@@ -5,7 +5,7 @@
 # HOSTFLAGS goes to the host, JOINFLAGS to both joiners, AFLAGS / BFLAGS to one of them. Compares both joiners'
 # state logs with the host's.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 Q=${QUIT:-5400}
 COMMON="--sosonline-delay=3 --sosonline-quit=$Q"

@@ -3,7 +3,7 @@
 #   session.sh HOSTPORT "host flags" [ "guest flags" [delay_s] ]...
 # Each guest gets port HOSTPORT+n and joins HOSTPORT; delay_s staggers late joiners. Returns immediately.
 # Windows are tiled side by side (host on the left); set NO_TILE=1 to leave them where Unity puts them.
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"
+. "$(dirname "$0")/game-dir.sh"
 COMMON="-screen-fullscreen 0 -screen-width 640 -screen-height 360"
 PLACE="$(cygpath -w "$(cd "$(dirname "$0")" && pwd)/place-window.ps1")" # absolute: launch() changes directory
 

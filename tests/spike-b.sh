@@ -4,7 +4,7 @@
 # at C, walks, fights (bot), and records its inputs. Run B (27200) loads that autosave and replays A's inputs,
 # aligned on the entry load's end frame L. Then compares the per-frame state logs from L on.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 SEED=${SEED:-12345}
 wait_game() { sleep 5; while tasklist | grep -qi SeaOfStars; do sleep 3; done; }
 # SKIP_A=1 reuses the last recording (spike C reruns B only). STATEEVERY sets B's snapshot interval.

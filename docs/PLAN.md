@@ -184,7 +184,7 @@ Run B only after the prerequisite below. Run C only if B passes.
 
 ### Setup
 
-- Game build 3.0.60151, mod built and deployed (`tools\deploy.ps1`).
+- Game build 3.0.60151, mod built and deployed (`tools\install-to-game.ps1`).
 - `steam_appid.txt` containing `1244090` in the game folder.
 - Wrap every run: `tests/display-prefs.sh save` before, `tests/display-prefs.sh restore` after.
 - Outputs land in `<game>\BepInEx\SosOnline\`: `log-<port>.txt`, `state-<port>.log`, screenshots.
@@ -195,7 +195,7 @@ Run B only after the prerequisite below. Run C only if B passes.
 The interop assemblies list every game class. To print a class's members:
 
 ```powershell
-$g='W:\SteamLibrary\steamapps\common\Sea of Stars\BepInEx'
+$g=(& .\tools\game-dir.ps1) + '\BepInEx'
 [AppDomain]::CurrentDomain.add_AssemblyResolve({param($s,$e) $n=($e.Name -split ',')[0]; foreach($d in "$g\interop","$g\core"){ $p=Join-Path $d "$n.dll"; if(Test-Path $p){ return [Reflection.Assembly]::LoadFrom($p) } }; $null})
 $a=[Reflection.Assembly]::LoadFrom("$g\interop\Assembly-CSharp.dll")
 try{$t=$a.GetTypes()}catch{$t=$_.Exception.InnerException.Types | ? {$_}}

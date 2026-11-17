@@ -13,14 +13,14 @@ Play **Sea of Stars: Sunset Edition** co-op online with your Steam friends. The 
 - **Native menus.** An **Online** entry on the title screen and pause menu, built from the game's own widgets.
 - **Your saves stay yours.** Friends play on a copy of the host's save; their own saves are never touched.
 - **Fixes itself.** If a friend's game gets out of sync, it corrects itself or rejoins in a few seconds.
-- **Automatic, signed updates** from this repository.
+- **Signed updates, on your terms.** The title screen shows the mod's version and says when an update is available; you choose when to install it.
 
 ## Installation
 
 > [!WARNING]
 > The only official download is the [Releases page](https://github.com/miguelguzmanr/sosonline/releases/latest) of this repository.
 
-Everyone in a session needs **the same version of the mod** and of the game. Install it once; after that it updates itself.
+Everyone in a session needs **the same version of the mod** and of the game. Install it once; after that, update from the game's **Online** menu.
 
 You need Sea of Stars on Steam (Windows) and `SosOnline-<version>.zip` from the [latest release](https://github.com/miguelguzmanr/sosonline/releases/latest).
 
@@ -32,9 +32,12 @@ You need Sea of Stars on Steam (Windows) and `SosOnline-<version>.zip` from the 
 <details>
 <summary>Updates</summary>
 
-At every start the mod checks this repository for a newer release and downloads it in the background. It installs it only if its signature matches. A notice tells you when it's ready; choose **Restart to update** in the title screen's **Online** menu. You can also choose **Check for updates** there at any time.
+The bottom-left corner of the title screen shows the mod's version, e.g. *Online Co-op Version 0.56*, and adds *(Update available)* when there's a newer release. Nothing is downloaded until you ask:
 
-To turn automatic updates off, set `AutoUpdate = false` under `[Updates]` in `BepInEx\config\sosonline.coop.cfg`. The check is one request to GitHub; nothing personal is sent.
+1. Title screen → **Online** → **Check for updates** → **Install**. The update is installed only if its signature matches.
+2. **Restart** (through Steam), or **Later**: it runs from the next start.
+
+At start the mod makes one request to GitHub to see whether there's a newer release; nothing personal is sent.
 
 </details>
 

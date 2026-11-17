@@ -7,3 +7,5 @@ dist/
 # Never commit a release signing key (it lives in %APPDATA%\SosOnline).
 release-signing-key*.txt
 *.pkcs8
+# Each PC's Sea of Stars folder (tools/game-dir.ps1); personal, never committed.
+game-dir.txt

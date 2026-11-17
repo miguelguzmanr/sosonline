@@ -17,7 +17,7 @@ Determinism is the whole game: anything a PC reads that isn't synced input or sy
 
 ## Working rules
 
-- **Commits:** only when asked, straight to `main` (`tools/publish.ps1` needs a clean `main`).
+- **Commits:** only when asked, straight to `main` (`tools/publish-release.ps1` needs a clean `main`).
 - **Releases:** only on an explicit go-ahead. The friend's game installs every release by itself.
 - **Never touch the game folder while the user is playing.** Check that `SeaOfStars` isn't running before building, deploying or testing: `dotnet build` deploys into the game folder by default (pass `-p:DeployToGame=false` for a compile check).
 - **Never touch the user's real saves.** Tests play from sandbox copies (`SosOnlineTest-*`). Delete `SosOnlineTest-*` and `SosOnlineSession-<port>` in `%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars` afterwards; never `SosOnlineSession` or `SosOnlineBackup`.
@@ -40,12 +40,12 @@ SosOnline/          plugin source (net6.0, references the game's BepInEx interop
   Net/              session, protocol, transports (Steam, UDP)
   Steam/            steam_api64 flat-API bindings, invites
   UI/               native menus, localization bridge, toasts, debug panel
-  Update/           automatic updates from signed GitHub releases
+  Update/           manual updates from signed GitHub releases
 tests/              two-instance test scripts and input scripts
-tools/deploy.ps1    install BepInEx + build and deploy
-tools/package.ps1   build a (signed) zip in dist/
-tools/publish.ps1   release main on GitHub (automatic updates pick it up)
-tools/new-signing-key.ps1  create the release signing key (once)
+tools/install-to-game.ps1   build and install into your own game folder (installs BepInEx first if missing)
+tools/make-release-zip.ps1  build the signed zip players install, in dist/ (nothing uploaded)
+tools/publish-release.ps1   push main and create the GitHub release (runs make-release-zip.ps1)
+tools/new-signing-key.ps1   create the release signing key (once)
 ```
 
 ## How it works
@@ -173,33 +173,36 @@ The menus use the game's own widgets, so they look, sound and navigate like the 
   - Player names are cleaned where they enter the mod (`UI/PlayerNames.cs`): no control, zero-width or line-break characters, `<` and `>` replaced so a name can't inject text markup, at most 24 characters, and "Player N" when the game's fonts can't draw most of it.
 - **F8** opens a small debug panel, and a one-line HUD shows players, ping and sync state during a session.
 
-## Build and deploy
+## Build and install
+
+**Game folder.** Every tool, test script and the build find Sea of Stars through `tools/game-dir.ps1`: `-GameDir`, else the `SOS_GAME_DIR` environment variable, else `game-dir.txt` in the repository root, else Steam's library folders. The folder it finds is written to `game-dir.txt`, which is gitignored: never put a PC's own path in a committed file. Test scripts get it as `$GAME` from `tests/game-dir.sh` (the `.cmd` scripts call the resolver directly).
 
 Requirements: Sea of Stars on Steam (Windows) and the .NET 6+ SDK.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -GameDir "W:\SteamLibrary\steamapps\common\Sea of Stars"
+powershell -ExecutionPolicy Bypass -File tools\install-to-game.ps1
 ```
 
 - The first run installs BepInEx 6 IL2CPP (it asks first). Start the game once so BepInEx can generate its interop assemblies, quit, then run the script again to build and install the plugin.
 - To pack a zip without releasing it (needs PowerShell 7):
 
 ```powershell
-pwsh -File tools\package.ps1 -GameDir "W:\SteamLibrary\steamapps\common\Sea of Stars"
+pwsh -File tools\make-release-zip.ps1
 ```
 
   It writes `dist\SosOnline-<version>.zip`, signed when the release key exists.
 
-## Automatic updates
+## Updates (manual)
 
-At every game start the mod asks GitHub for the [latest release](https://github.com/miguelguzmanr/sosonline/releases/latest). If it is newer, the mod downloads its zip in the background. It installs the DLL only if the DLL's signature matches the release key built into the mod. A toast then says *Update … downloaded. Restart from the Online menu.*, and the next start runs it. Nothing downloaded is loaded in the running game.
+Updates are manual since 2026-11-17 (`Update/AutoUpdate.cs`); before, the mod downloaded and installed every newer release at start.
 
-- **Restart to update (0.1.45 -> 0.1.46)** in the title screen's **Online** menu (and **Restart** in the pause menu's **Online** popup, outside a running session) quits the game; a hidden PowerShell waits for it to exit and starts it again through Steam (`steam://rungameid/1244090`).
-
-- To turn it off, set `AutoUpdate = false` under `[Updates]` in `BepInEx\config\sosonline.coop.cfg`.
-- Builds you made yourself with uncommitted changes (`…-modified`) and test runs never update.
-- If someone joins with a different version, the host refuses them and names both versions. Restarting the game picks up the update.
-- The check is one request to `api.github.com` at start, plus the download when there is an update. No account is needed and nothing personal is sent.
+- **At start** the mod only looks up the [latest release](https://github.com/miguelguzmanr/sosonline/releases/latest) (one request to `api.github.com`; not in test runs). If it's newer, `AutoUpdate.Available` is set.
+- **Title screen version line** (`UI/VersionLabel.cs`): *Online Co-op Version 0.56*, plus *(Update available)*, bottom-left. It's a copy of the game's own version text (`VersionInfo`), moved to the root canvas (the game's line sits in a layout group) and mirrored: as far from the left edge as the game's drawn text is from the right edge, same bottom.
+- **Versions as players see them:** `AutoUpdate.Display` shows 0.1.56 as "0.56" (releases are always 0.1.&lt;commit count&gt;). Logs and assembly versions keep the full 0.1.56.
+- **Check for updates** (title screen → Online) looks up the release and asks: *Up to date (0.56).*, or *Update 0.57 is available.* → Install / Back. It downloads the zip and installs the DLL only if its signature matches the release key built into the mod (the running DLL is renamed to `.old`; nothing downloaded is loaded in the running game). On a locally modified build (`…-modified`) it offers the published release even when that isn't newer.
+- **Restart to update (0.56 -> 0.57)** then appears in the Online menu (and **Restart** in the pause menu's Online popup, outside a running session). It quits the game; a hidden PowerShell waits for it to exit and starts it again through Steam (`steam://rungameid/1244090`).
+- If someone joins with a different version, the host refuses them and names both versions.
+- The old `AutoUpdate` setting in `BepInEx\config\sosonline.coop.cfg` is no longer read.
 
 ## Releasing
 
@@ -209,10 +212,10 @@ Needs PowerShell 7, the GitHub CLI (`gh`, logged in), and the release signing ke
 2. For each release, commit everything on `main`, then run:
 
 ```powershell
-pwsh -File tools\publish.ps1 -GameDir "W:\SteamLibrary\steamapps\common\Sea of Stars"
+pwsh -File tools\publish-release.ps1
 ```
 
-   It pushes `main`, builds and signs `dist\SosOnline-0.1.<count>+<commit>.zip`, and creates release `v0.1.<count>`. The count is the number of commits, so versions always increase. Players get the release at their next game start.
+   It pushes `main`, builds and signs `dist\SosOnline-0.1.<count>+<commit>.zip`, and creates release `v0.1.<count>`. The count is the number of commits, so versions always increase. Players see *(Update available)* at their next game start and install it from the Online menu.
 
 ## Testing
 
@@ -251,6 +254,8 @@ Session flags:
 | `--sosonline-campat=F` | Uses the nearest campfire as if P1 pressed Interact (pass it to every instance). An early save only gets "The campfire feels cozy". |
 | `--sosonline-campstart=F`, `--sosonline-campstop=F` | The campfire's own camping toggle, past the story unlock: intro, camp, and the Rest choice when stopped. |
 | `--sosonline-fakeupdate=V` | Acts as if update V was downloaded (shows **Restart to update**). |
+| `--sosonline-fakeavailable=V` | Acts as if the lookup at start found V (the version line says *(Update available)*). |
+| `--sosonline-versionshot` | Title screen: screenshot `ui-version` with the version line, then quit. Never opens a save. |
 | `--sosonline-name=TEXT` | A test player name; escapes like `\n` and `\u0020` for characters a command line can't carry. |
 
 `tests/session.sh` launches a host plus guests, staggering late joiners, and tiles their windows side by side, host on the left (`tests/place-window.ps1`; `NO_TILE=1` turns it off). It doesn't start a late joiner once the host's game has quit.

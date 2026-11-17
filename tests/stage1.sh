@@ -4,7 +4,7 @@
 # The host pretends each guest last played the last party member (--sosonline-rememberchar=last), so a join that gets
 # another character is handed that one back. Compares each guest with the host, run by run.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 COMMON="--sosonline-delay=3 --sosonline-quit=${QUIT:-3000} $EXTRA"
 tests/session.sh 27100 "--sosonline-play=0 --sosonline-seed=777 --sosonline-rememberchar=${CHAR:-last} --sosonline-quitruns=2 --sosonline-script=$S/host-walk.txt $COMMON $HOSTFLAGS" \

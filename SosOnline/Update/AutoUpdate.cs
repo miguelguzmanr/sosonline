@@ -13,21 +13,20 @@ using UnityEngine;
 namespace SosOnline.Update;
 
 /// <summary>
-/// Automatic updates from the project's GitHub releases.
+/// Manual updates from the project's GitHub releases.
 ///
-/// At game start (in the background) the latest release is read from GitHub. If it is a newer build, its zip is
-/// downloaded and the DLL inside is installed only if its signature (<c>SosOnline.dll.sig</c>, ECDSA P-256 over SHA-256)
+/// At game start (in the background) the latest release is only looked up, so the title screen's version line can say
+/// "(Update available)" (<see cref="Available"/>); nothing is downloaded. Updating is always the player's choice:
+/// <see cref="CheckNow"/> (the title screen's Online page, "Check for updates") downloads the release's zip and
+/// installs the DLL inside only if its signature (<c>SosOnline.dll.sig</c>, ECDSA P-256 over SHA-256)
 /// matches <see cref="PublicKey"/>, the key whose private half only the maintainer has, and the DLL itself reports
 /// a newer version. The running DLL is renamed to <c>SosOnline.dll.old</c> (Windows allows renaming a loaded file)
 /// and the new one takes its place: the next game start runs it. Nothing is ever loaded from the download in this
 /// session.
 ///
-/// Off with <c>AutoUpdate = false</c> in <c>BepInEx\config\sosonline.coop.cfg</c>; never for a locally modified
-/// build or a test run.
-///
-/// <see cref="CheckNow"/> (the title screen's Online page, "Check for updates") does the same on demand and asks
-/// first: "Up to date", or the newer release with Install / Back, then Restart / Later. On a locally modified build
-/// it offers the published release even when that isn't newer, so the PC goes back to a build everyone has.
+/// <see cref="CheckNow"/> asks first: "Up to date", or the newer release with Install / Back, then Restart / Later.
+/// On a locally modified build it offers the published release even when that isn't newer, so the PC goes back to a
+/// build everyone has. No lookup at start in test runs.
 /// </summary>
 internal static class AutoUpdate
 {
@@ -41,8 +40,6 @@ internal static class AutoUpdate
     private const long MaxDownloadBytes = 20 * 1024 * 1024;
     private const string DllName = "SosOnline.dll";
 
-    /// <summary>Messages for the main thread (toasts aren't thread-safe).</summary>
-    private static readonly ConcurrentQueue<string> Notices = new();
     /// <summary>Work for the main thread (the game's popups), from the background checks.</summary>
     private static readonly ConcurrentQueue<Action> MainThread = new();
 
@@ -67,8 +64,15 @@ internal static class AutoUpdate
 
     public static Version Current => typeof(AutoUpdate).Assembly.GetName().Version;
 
-    /// <summary>"Update 0.1.40 is ready…" once one was installed this session, otherwise null.</summary>
-    public static string Installed { get; private set; }
+    /// <summary>
+    /// A version as players see it: "0.56" for 0.1.56. Releases are 0.1.&lt;commit count&gt;; the 1 never changes, so
+    /// only the count is shown.
+    /// </summary>
+    public static string Display(Version v) => v.Minor == 1 ? $"{v.Major}.{Math.Max(v.Build, 0)}" : v.ToString(3);
+
+    /// <summary>A newer release than this build, found by the lookup at start or by "Check for updates"; else null.</summary>
+    public static Version Available => _available;
+    private static volatile Version _available;
 
     /// <summary>The version installed for the next start this session, or null. Read on the main thread only.</summary>
     public static Version Downloaded => _downloaded;
@@ -77,8 +81,11 @@ internal static class AutoUpdate
     /// <summary>Test harness (--sosonline-fakeupdate=V): act as if V had been downloaded.</summary>
     internal static void FakeDownloaded(Version v) => _downloaded = v;
 
-    /// <summary>"Restart to update (0.1.39 -> 0.1.45)", for the Online menus (the game's menu font has no "→").</summary>
-    public static string RestartLabel => _downloaded == null ? null : $"Restart to update ({Current.ToString(3)} -> {_downloaded.ToString(3)})";
+    /// <summary>Test harness (--sosonline-fakeavailable=V): act as if the lookup had found V.</summary>
+    internal static void FakeAvailable(Version v) => _available = v;
+
+    /// <summary>"Restart to update (0.39 -> 0.45)", for the Online menus (the game's menu font has no "→").</summary>
+    public static string RestartLabel => _downloaded == null ? null : $"Restart to update ({Display(Current)} -> {Display(_downloaded)})";
 
     /// <summary>
     /// Quits the game and starts it again through Steam, so the downloaded build runs. A hidden PowerShell waits for
@@ -117,23 +124,20 @@ internal static class AutoUpdate
         TryDelete(Path.Combine(dir, DllName + ".old"));
         TryDelete(Path.Combine(dir, DllName + ".new"));
 
-        if (!Settings.AutoUpdate) { Plugin.Log.LogInfo("[update] automatic updates are off"); return; }
-        if (SessionLogs.Build.Contains("-modified")) { Plugin.Log.LogInfo("[update] locally modified build: no automatic update"); return; }
         if (TestHarness.HasArgs) return;
-        Task.Run(CheckAsync);
+        Task.Run(LookUpAsync);
     }
 
     /// <summary>Main thread, every frame.</summary>
     public static void Update()
     {
-        while (Notices.TryDequeue(out var message)) Toast.Show(message);
         while (MainThread.TryDequeue(out var action))
             try { action(); } catch (Exception e) { Plugin.Log.LogError($"[update] {e}"); }
     }
 
     /// <summary>
     /// Main thread, from the Online page: look for the latest release now and ask before installing it. Works with
-    /// automatic updates off and on a locally modified build (then the published release replaces it).
+    /// any build, including a locally modified one (then the published release replaces it).
     /// </summary>
     public static void CheckNow()
     {
@@ -161,11 +165,12 @@ internal static class AutoUpdate
         }
         var current = Current;
         bool newer = Normalize(release.Version) > Normalize(current);
-        string v = release.Version.ToString(3);
+        _available = newer ? release.Version : null;
+        string v = Display(release.Version);
         Plugin.Log.LogInfo($"[update] latest release {release.Tag}; this build {SessionLogs.Build}{(newer ? ": newer" : LocalBuild ? ": local build" : ": up to date")}");
         if (!newer && !LocalBuild)
         {
-            Ask($"Up to date ({current.ToString(3)}).", "OK", null, null);
+            Ask($"Up to date ({Display(current)}).", "OK", null, null);
             return;
         }
         string question = newer ? $"Update {v} is available." : $"This is a local build.\nInstall the published {v}?";
@@ -176,7 +181,7 @@ internal static class AutoUpdate
     {
         if (_manual != Manual.Idle) return;
         _manual = Manual.Downloading;
-        string v = release.Version.ToString(3);
+        string v = Display(release.Version);
         Toast.Show($"Downloading {v}…");
         bool anyVersion = LocalBuild;
         Task.Run(async () =>
@@ -230,20 +235,22 @@ internal static class AutoUpdate
         return null;
     }
 
-    private static async Task CheckAsync()
+    /// <summary>At start: only whether a newer release exists, for the title screen's version line.</summary>
+    private static async Task LookUpAsync()
     {
         try
         {
             var release = await FindLatestAsync();
             if (release == null) return;
             var current = Current;
-            if (Normalize(release.Version) <= Normalize(current)) { Plugin.Log.LogInfo($"[update] up to date ({current.ToString(3)}; latest release {release.Tag})"); return; }
-            if (await DownloadAndInstallAsync(release, false)) Notices.Enqueue(Installed);
+            bool newer = Normalize(release.Version) > Normalize(current);
+            if (newer) _available = release.Version;
+            Plugin.Log.LogInfo($"[update] latest release {release.Tag}; this build {current.ToString(3)}{(newer ? ": update available" : ": up to date")}");
         }
         catch (Exception e)
         {
-            // Offline, GitHub unreachable or rate-limited: try again at the next start.
-            Plugin.Log.LogWarning($"[update] check failed: {e.GetType().Name}: {e.Message}");
+            // Offline, GitHub unreachable or rate-limited: the version line just doesn't mention an update.
+            Plugin.Log.LogWarning($"[update] lookup failed: {e.GetType().Name}: {e.Message}");
         }
     }
 
@@ -311,7 +318,6 @@ internal static class AutoUpdate
         }
         // Its signature next to it, as in the release (a local build has none, or a stale one).
         try { File.WriteAllBytes(target + ".sig", sig); } catch (Exception e) { Plugin.Log.LogWarning($"[update] signature file not written: {e.Message}"); }
-        Installed = $"Update {name.Version.ToString(3)} downloaded. Restart from the Online menu.";
         _downloaded = name.Version;
         Plugin.Log.LogInfo($"[update] installed {name.Version.ToString(3)} ({tag}); it runs from the next start");
         return true;

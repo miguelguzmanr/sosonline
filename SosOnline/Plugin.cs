@@ -61,17 +61,12 @@ public sealed class Plugin : BasePlugin
 internal static class Settings
 {
     private static BepInEx.Configuration.ConfigEntry<bool> _openToFriends;
-    private static BepInEx.Configuration.ConfigEntry<bool> _autoUpdate;
 
     public static void Bind(BepInEx.Configuration.ConfigFile config)
     {
         _openToFriends = config.Bind("Online", "OpenToFriends", false,
             "Keep a Steam lobby open while you play, so friends can join your game from Steam at any time.");
-        _autoUpdate = config.Bind("Updates", "AutoUpdate", true,
-            "At game start, download the newest signed release from GitHub; it runs from the next start.");
     }
-
-    public static bool AutoUpdate => _autoUpdate?.Value ?? true;
 
     /// <summary>A Steam lobby is open whenever this PC plays its own game; friends join from Steam, no hosting step.</summary>
     public static bool OpenToFriends
@@ -103,6 +98,7 @@ public sealed class OnlineBehaviour : MonoBehaviour
             SessionLogs.Update();
             Overlay.Update();
             NativeMenus.Update();
+            VersionLabel.Update();
             SteamInvites.Update();
             CoopProbe.Update();
             TestHarness.Update();

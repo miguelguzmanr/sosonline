@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Summarizes battle-map.sh runs: offset, frame the game saw the press, first attack / block result.
-OUT="/w/SteamLibrary/steamapps/common/Sea of Stars/BepInEx/SosOnline"
+. "$(dirname "$0")/game-dir.sh"; OUT="$GAME/BepInEx/SosOnline"
 for f in "$OUT"/log-272*.txt; do
   k=$(grep -o -m1 'press_-\?[0-9]*' "$f" | sed 's/press_//')
   p=$(grep -m1 -E 'OnInputPressed' "$f" | grep -o ' f[0-9]*' | head -1)

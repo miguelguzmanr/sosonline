@@ -753,7 +753,7 @@ internal static class NativeMenus
         {
             // Not synced (no lockstep runs here), so the choice may depend on this PC's download. Friends get the
             // update too, so playing together waits for the restart anyway.
-            Confirm($"Update {SosOnline.Update.AutoUpdate.Downloaded.ToString(3)} is ready.\nEveryone needs the same version to play together.",
+            Confirm($"Update {SosOnline.Update.AutoUpdate.Display(SosOnline.Update.AutoUpdate.Downloaded)} is ready.\nEveryone needs the same version to play together.",
                 "Restart", SosOnline.Update.AutoUpdate.Restart);
             return;
         }

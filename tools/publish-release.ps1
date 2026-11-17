@@ -1,21 +1,22 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-  Publishes the current main as a GitHub release; players' games then update themselves at their next start.
+  Pushes main and publishes it as a GitHub release; players see "(Update available)" at their next start.
 
 .DESCRIPTION
   Needs a clean main pushed to GitHub, the GitHub CLI (gh) logged in, and the release signing key. Packs a signed zip
-  (package.ps1) and creates release v0.1.<count> with it. Games check the latest release at start, install a newer
-  signed build and run it from the start after.
+  (make-release-zip.ps1) and creates release v0.1.<count> with it. Games look up the latest release at start and
+  offer it on the title screen; players install it with Online > Check for updates.
 
 .PARAMETER GameDir
-  Sea of Stars install folder with BepInEx and its interop assemblies (needed to build).
+  Sea of Stars install folder. Optional: tools\game-dir.ps1 finds it (SOS_GAME_DIR, game-dir.txt, or Steam's libraries).
+  It needs BepInEx and its interop assemblies (to build).
 
 .PARAMETER Notes
   Release notes (default: the commit subjects since the previous release).
 #>
 param(
-    [string]$GameDir = "W:\SteamLibrary\steamapps\common\Sea of Stars",
+    [string]$GameDir,
     [string]$Notes
 )
 $ErrorActionPreference = "Stop"
@@ -29,7 +30,7 @@ git -C $root push origin main
 if ($LASTEXITCODE -ne 0) { throw "Push failed." }
 git -C $root fetch --tags --quiet origin
 
-& "$PSScriptRoot\package.ps1" -GameDir $GameDir
+& "$PSScriptRoot\make-release-zip.ps1" -GameDir $GameDir
 $count = (git -C $root rev-list --count HEAD).Trim()
 $tag = "v0.1.$count"
 $zip = Get-ChildItem (Join-Path $root "dist") -Filter "SosOnline-0.1.$count+*.zip" | Sort-Object LastWriteTime | Select-Object -Last 1
@@ -44,4 +45,4 @@ if (-not $Notes) {
 
 gh release create $tag $zip.FullName --repo miguelguzmanr/sosonline --title "Sea of Stars Online Co-op $tag" --notes $Notes --target main
 if ($LASTEXITCODE -ne 0) { throw "Release failed." }
-Write-Host "Released $tag. Games update at their next start and run it from the start after."
+Write-Host "Released $tag. Players see it as an available update at their next start."

@@ -6,9 +6,10 @@ Current state of the project, for whoever picks it up next. Update it at the end
 
 ## State right now
 
-- **Branch:** `main`, clean and pushed (`844ff2f`).
+- **Branch:** `main`, pushed: the docs housekeeping, manual updates with the title-screen version line, renamed tools, and the game folder found by `tools/game-dir.ps1`. None of it is released yet.
 - **Latest release:** `v0.1.56` (`844ff2f`), published 2026-11-17. Earlier ones still around: `v0.1.53`, `v0.1.52` (has the controller crash below), `v0.1.45`.
-- **The friend (P2)** updates automatically at their next game start.
+- **Installed on the user's PC:** a test build of the manual-updates change (`…-modified`), deployed by the version-line tests.
+- **Updates are manual from the next release on.** v0.1.56 and older still download a newer release at start, so the friend (P2) gets the next release automatically one last time; after that, *(Update available)* on the title screen and *Check for updates*.
 - **Test save:** tests run from the user's newest save (`--sosonline-start=0a`). Last known: the Forbidden Cavern, Bosslug fight at `ENCOUNTER=650`, a campfire 8 m from the start. It changes whenever the user plays.
 
 ## Open items, by priority
@@ -26,6 +27,8 @@ From the first session on v0.1.53 (user's report, 2026-11-16 late): the Bosslug 
 9. Older, not touched: guest crash after a re-sync in a battle (no repro; the log zip now includes the crash dump); `Session.MinAutoDelay` 4 (consider 2 after a stable Steam session); folded methods not covered by the deterministic-random wrappers (`CombatActor.OnPlayerPartyTurnDone`, `OnAnyCharacterTurnDone`, `OnPlayerCharacterTurnDone`, `OnEnemyCharacterTurnDone`); probes (turn, damage, clock lines) stay until battles are confirmed over Steam.
 
 ## Recently done
+
+- **Not released yet:** updates are manual (only a lookup at start, no download); *Online Co-op Version 0.57* in the title screen's bottom-left, mirroring the game's version line, with *(Update available)* when there is a newer release. Versions show as 0.57 instead of 0.1.57. Tested on the title screen (screenshots, both texts); *Check for updates* itself is unchanged apart from the version format.
 
 - **v0.1.56:** *Check for updates* in the title screen's Online menu, with a confirmation before installing (on a modified build it offers the published release). The title menu's Online entries reset whenever the game shows its title choices again, and hide once a save is chosen.
 - **v0.1.53:** removed the diagnostic patch on `InputManager.OnActiveControllerChanged` that crashed the game at start and in Options with a gamepad (in v0.1.52).

@@ -3,7 +3,7 @@
 # Guest 2 (27102) drops in by catching up. Screenshots on every PC at SHOTS show the menu banner (and, on the joiner,
 # the catch-up screen if a shot falls inside its replay). Prints the [menu] log lines and compares states.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 COMMON="--sosonline-delay=3 --sosonline-quit=${QUIT:-3600} --sosonline-shots=${SHOTS:-900,2260,2420,2980} $EXTRA"
 tests/session.sh 27100 "--sosonline-start=0 --sosonline-guests=1 --sosonline-seed=777 --sosonline-script=$S/${HOSTSCRIPT:-host-menu.txt} $COMMON" \

@@ -5,7 +5,7 @@
 # and progress.txt. Close the game first: the tests start their own instances. Builds must not run meanwhile.
 cd "$(dirname "$0")/.." || exit 1
 REPO="$PWD"
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 OUT="${1:-$O/sweep}"; mkdir -p "$OUT"; rm -f "$OUT"/*.txt
 SAVES="$LOCALAPPDATA/../LocalLow/Sabotage Studio/Sea of Stars"
 S="$(cygpath -m "$REPO/tests/scripts")"

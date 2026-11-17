@@ -4,7 +4,7 @@
 # the host has one (even mid-battle), else with a reload in place once the game allows saving.
 # Compares the guest with the host after the re-sync.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 COMMON="--sosonline-delay=3 --sosonline-quit=${QUIT:-3600} $EXTRA"
 tests/session.sh 27100 "--sosonline-start=0 --sosonline-guests=1 --sosonline-seed=777 --sosonline-script=$S/host-walk.txt $COMMON" \

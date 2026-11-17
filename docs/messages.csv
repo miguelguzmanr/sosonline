@@ -31,7 +31,6 @@
 30,toast,Notice at the top of the screen,{peer.Name} joined.,{peer.Name} joined.,8,yes,20,80,,SosOnline/Net/Session.cs,2261,
 31,toast,Notice at the top of the screen,"Leave co-op first, then accept the invite.","Leave co-op first, then accept the invite.",42,,42,80,,SosOnline/Steam/SteamInvites.cs,50,Applied the suggestion.
 32,toast,Notice at the top of the screen,Open Options from your own pause screen.,Open Options from your own pause screen.,40,,40,80,,SosOnline/UI/NativeMenus.cs,589,
-33,toast,Notice at the top of the screen (after an update downloads),Update {name.Version.ToString(3)} downloaded. Restart from the Online menu.,Update {name.Version.ToString(3)} downloaded. Restart from the Online menu.,49,yes,61,80,,SosOnline/Update/AutoUpdate.cs,195,
 34,error,"Notice, and the Online menu's status line",Steam is not available: {reason},Steam is not available: {reason},24,yes,36,80,,SosOnline/Net/Session.cs,227,
 35,error,"Notice, and the Online menu's status line",Go to the Title screen first.,Go to the Title screen first.,29,,29,80,,SosOnline/Net/Session.cs,268,
 36,error,"Notice, and the Online menu's status line",Input system not ready yet.,Input system not ready yet.,27,,27,80,,SosOnline/Net/Session.cs,269,
@@ -51,7 +50,7 @@
 50,popup,Game-style popup (pause menu > Online),Restart the game now?,Restart the game now?,21,,21,,,SosOnline/UI/NativeMenus.cs,486,
 51,popup,Game-style popup (pause menu > Online),"{PlayersLine(s)}\nLeave co-op, P{slot + 1}?","{PlayersLine(s)}\nLeave co-op, P{slot + 1}?",17,yes,41,,,SosOnline/UI/NativeMenus.cs,624,
 52,popup,Game-style popup (pause menu > Online),{PlayersLine(s)}{waiting},{PlayersLine(s)}{waiting},0,yes,24,,,SosOnline/UI/NativeMenus.cs,629,
-53,popup,Game-style popup (pause menu > Online),Update {SosOnline.Update.AutoUpdate.Downloaded.ToString(3)} is ready.\nEveryone needs the same version to play together.,Update {SosOnline.Update.AutoUpdate.Downloaded.ToString(3)} is ready.\nEveryone needs the same version to play together.,67,yes,79,,,SosOnline/UI/NativeMenus.cs,637,"The update applies only after the restart, so it says 'Update {new} is ready.' instead of 'Updated from {old} to {new}.'"
+53,popup,Game-style popup (pause menu > Online),Update {version} is ready.\nEveryone needs the same version to play together.,Update {version} is ready.\nEveryone needs the same version to play together.,67,yes,79,,,SosOnline/UI/NativeMenus.cs,756,"The update applies only after the restart, so it says 'Update {new} is ready.' instead of 'Updated from {old} to {new}.'"
 54,popup,Game-style popup (pause menu > Online),Open the game to friends?\nThey can join at any point if a save is possible.,Open the game to friends?\nThey can join at any point if a save is possible.,76,,76,,,SosOnline/UI/NativeMenus.cs,643,
 55,popup,Game-style popup (pause menu > Online),\nFriends who join drop in right here.,\nFriends who join drop in right here.,38,,38,,,SosOnline/UI/NativeMenus.cs,648,
 56,popup,"Game-style popup (pause menu > Online, host; appended when friends are joining)",\nJoining: {names},\nJoining: {names},10,yes,22,,,SosOnline/UI/NativeMenus.cs,628,Applied the suggestion.
@@ -227,7 +226,7 @@
 226,error,Notice as 'Can't join: <reason>' (from the host),different game setup.,different game setup.,21,,21,80,,SosOnline/Net/Session.cs,714,Action-table hash: usually another mod or game version.
 227,error,Notice as 'Can't join: <reason>' (from the host),the game is starting. Try again in a moment.,the game is starting. Try again in a moment.,44,,44,80,,SosOnline/Net/Session.cs,715,
 228,error,Notice as 'Can't join: <reason>' (from the host),the game is full.,the game is full.,17,,17,80,,SosOnline/Net/Session.cs,717,
-229,menu entry,Title screen > Online page and pause menu Online popup,Restart to update ({Current.ToString(3)} -> {_downloaded.ToString(3)}),Restart to update ({Current.ToString(3)} -> {_downloaded.ToString(3)}),24,yes,48,,,SosOnline/Update/AutoUpdate.cs,56,Fine as is.
+229,menu entry,Title screen > Online page and pause menu Online popup,Restart to update ({current} -> {downloaded}),Restart to update ({current} -> {downloaded}),24,yes,48,,,SosOnline/Update/AutoUpdate.cs,88,Fine as is. Versions shown as 0.56 (2026-11-17).
 230,status,Online menu status line,Ping {s.Peers.Max(p => p.rtt):F0} ms,Ping {s.Peers.Max(p => p.rtt):F0} ms,8,yes,20,,,SosOnline/UI/NativeMenus.cs,666,
 231,menu entry,Title screen > Online > Start (save list),Slot {i + 1} (autosave),Slot {i + 1} (autosave),16,yes,28,,,SosOnline/Game/GameBridge.cs,443,"Checked: the game's save screen numbers its slots 1-3 and shows the location and the save's date and time ('1  The Forbidden Cavern  11/15/2026 9:50 PM'); empty slots say 'No data'. Kept 'Slot N' as is, by choice."
 232,toast,Notice at the top of the screen,You're back in sync.,You're back in sync.,20,,20,80,,SosOnline/Net/Session.cs,981,New (2026-11-16): a guest that got out of sync rejoined by replaying while the others played on.
@@ -256,3 +255,5 @@
 255,popup choice,Popup after installing,Later,Later,5,,5,,,SosOnline/Update/AutoUpdate.cs,191,New (2026-11-16).
 256,toast,Notice at the top of the screen,Couldn't check for updates.,Couldn't check for updates.,27,,27,80,,SosOnline/Update/AutoUpdate.cs,159,New (2026-11-16).
 257,toast,Notice at the top of the screen,Couldn't install the update.,Couldn't install the update.,28,,28,80,,SosOnline/Update/AutoUpdate.cs,190,New (2026-11-16).
+258,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version},Online Co-op Version {version},30,yes,25,,,SosOnline/UI/VersionLabel.cs,32,New (2026-11-17). Wording from the user.
+259,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version} (Update available),Online Co-op Version {version} (Update available),49,yes,44,,,SosOnline/UI/VersionLabel.cs,31,New (2026-11-17). Wording from the user.

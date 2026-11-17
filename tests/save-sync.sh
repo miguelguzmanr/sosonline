@@ -3,7 +3,7 @@
 # SAVER=host (default) or guest: who opens the save point and answers the questions. Prints both PCs' menu
 # and view timelines and the guest's sync result.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 NET="--sosonline-lag=${LAG:-20} --sosonline-jitter=${JITTER:-25} --sosonline-spikes=${SPIKES:-3}"
 COMMON="--sosonline-delay=${DELAY:-4} --sosonline-quit=${QUIT:-2000} $NET $*"

@@ -2,7 +2,7 @@
 # Live two-instance battle (finding 8): host and guest walk, a battle starts on frame 1500 on both PCs, the bot plays
 # it. Prints the guest's position corrections and mismatches. Extra arguments go to both instances.
 cd "$(dirname "$0")/.."
-GAME="/w/SteamLibrary/steamapps/common/Sea of Stars"; O="$GAME/BepInEx/SosOnline"
+. tests/game-dir.sh; O="$GAME/BepInEx/SosOnline"
 S="$(cygpath -m "$PWD/tests/scripts")"
 COMMON="--sosonline-delay=3 --sosonline-encounter=1500 --sosonline-bot --sosonline-quit=${QUIT:-3600} $*"
 tests/session.sh 27100 "--sosonline-start=0 --sosonline-guests=1 --sosonline-seed=777 --sosonline-script=$S/host-walk.txt $COMMON" "--sosonline-script=$S/guest-join-walk.txt $COMMON" 4
