@@ -38,6 +38,7 @@ namespace SosOnline;
 ///   --sosonline-nosummonfix       leave summon slot picks to each PC (reproduces the Acid Bugs' swapped slots)
 ///   --sosonline-pausestate=F[,F2]  log the game's pause state (paused, pause disablers) at those frames
 ///   --sosonline-titleoptions      open the game's Options from the title screen and log for 10 s (crash check)
+///   --sosonline-titleflow         title choices shown again with Online open, then Online > Host > Start > a save (menu checks)
 ///   --sosonline-updatecheck       title screen: Online page, Check for updates; quits after 90 s
 ///   --sosonline-popupanswer=L,... answer the mod's popups that offer one of these labels ("_" for a space)
 ///   --sosonline-npcprobe          log every frame the active NPCs and each NPC's first inactive ancestor change
@@ -108,6 +109,13 @@ internal static class TestHarness
             SaveMirror.UseSandbox($"SosOnlineTest-{port}");
             SaveMirror.MirrorFolder = $"SosOnlineSession-{port}";
             SpikeB.CopyIntoSandbox();
+        }
+        else
+        {
+            // Every test run plays from a copy: a title-screen test that started a game from "Slot 1" overwrote the
+            // player's real autosave twice (2026-11-16).
+            SaveMirror.UseSandbox("SosOnlineTest-steam");
+            SaveMirror.MirrorFolder = "SosOnlineSession-steam";
         }
         if (Args.TryGetValue("fakeupdate", out var fu)) SosOnline.Update.AutoUpdate.FakeDownloaded(Version.Parse(fu));
         if (Args.TryGetValue("delay", out var d)) Session.Instance.ConfiguredDelay = int.Parse(d);
@@ -192,6 +200,34 @@ internal static class TestHarness
         else { Plugin.Log.LogInfo("[test] update check test done"); Application.Quit(); }
         _ucStep++;
     }
+    /// <summary>
+    /// --sosonline-titleflow: Online > Host > Start > first save (the menu must go at once), then back to the title
+    /// (only the game's own entries), then Online again. Logs the title list at each step; screenshots ui-*.
+    /// </summary>
+    private static void TitleFlowTest()
+    {
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (now < _tfAt) return;
+        string State() => UI.NativeMenus.TitleMenuState();
+        switch (_tfStep)
+        {
+            case 0: if (!GameBridge.AtTitleScreen) return; _tfAt = now + 5; break;
+            case 1: GameBridge.FindTitleScreen()?.ShowChoices(); _tfAt = now + 2; break;
+            case 2: Plugin.Log.LogInfo($"[test] title: {State()}"); UI.NativeMenus.OpenTitleMenu(); _tfAt = now + 2; break;
+            // What the game does when it shows the title again (back from a game): only its own entries must remain.
+            case 3: Plugin.Log.LogInfo($"[test] online: {State()}"); GameBridge.FindTitleScreen()?.ShowChoices(); _tfAt = now + 2; break;
+            case 4: Plugin.Log.LogInfo($"[test] title choices shown again with Online open: {State()}"); Shot("ui-title-back"); _tfAt = now + 1; break;
+            case 5: UI.NativeMenus.OpenTitleMenu(); _tfAt = now + 2; break;
+            case 6: Plugin.Log.LogInfo($"[test] online again: {State()}"); UI.NativeMenus.ClickEntry("Host"); _tfAt = now + 6; break;
+            case 7: Plugin.Log.LogInfo($"[test] hosting: {State()}"); UI.NativeMenus.ClickEntry("Start"); _tfAt = now + 2; break;
+            case 8: Plugin.Log.LogInfo($"[test] saves: {State()}"); UI.NativeMenus.ClickEntry(0); Plugin.Log.LogInfo($"[test] save chosen, same frame: {State()}"); _tfAt = now + 0.3; break;
+            case 9: Plugin.Log.LogInfo($"[test] save chosen, 0.3 s: {State()}"); Shot("ui-start-chosen"); _tfAt = now + 8; break;
+            default: Plugin.Log.LogInfo("[test] title flow test done"); Session.Instance.Leave(); Application.Quit(); _tfStep = 99; return;
+        }
+        _tfStep++;
+    }
+    private static int _tfStep;
+    private static double _tfAt;
     private static int _ucStep;
     private static double _ucAt;
     private static int _toStep;
@@ -255,6 +291,7 @@ internal static class TestHarness
         if (Args.ContainsKey("titleoptions")) TitleOptionsTest();
         UI.NativeMenus.TestAnswerTick();
         if (Args.ContainsKey("updatecheck")) UpdateCheckTest();
+        if (Args.ContainsKey("titleflow")) TitleFlowTest();
         if (Args.Count == 0 || _autoDone) return;
         var session = Session.Instance;
 

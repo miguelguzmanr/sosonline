@@ -197,7 +197,41 @@ internal static class NativeMenus
     public static bool SubmenuOpen { get; private set; }
 
     [HarmonyPatch(typeof(TitleScreen), nameof(TitleScreen.ShowChoices))]
-    private static class P_TitleShowChoices { private static void Postfix(TitleScreen __instance) { if (NativeCode.Is<TitleScreen>(__instance)) InjectTitleButton(__instance); } }
+    private static class P_TitleShowChoices
+    {
+        private static void Postfix(TitleScreen __instance)
+        {
+            if (!NativeCode.Is<TitleScreen>(__instance)) return;
+            ResetTitleMenu(__instance);
+            InjectTitleButton(__instance);
+        }
+    }
+
+    /// <summary>
+    /// The game shows its title choices (at start, or back from a game): its own entries only. Its menu turns every
+    /// button in the list back on, the Online page's entries included, which showed both menus mixed after a session
+    /// (2026-11-16). Our entries and status line go, and the page state starts over.
+    /// </summary>
+    private static void ResetTitleMenu(TitleScreen title)
+    {
+        try
+        {
+            _starting = false;
+            SubmenuOpen = false;
+            _currentPage = null;
+            foreach (var go in _hiddenOriginals) if (Alive(go)) SetActive(go, true);
+            _hiddenOriginals.Clear();
+            var container = title.optionsButton?.transform.parent;
+            if (container != null)
+                for (int i = 0; i < container.childCount; i++)
+                {
+                    var child = container.GetChild(i).gameObject;
+                    if (child.name.StartsWith(EntryName, StringComparison.Ordinal)) SetActive(child, false);
+                }
+            if (Alive(_status)) SetActive(_status.gameObject, false);
+        }
+        catch (Exception e) { Plugin.Log.LogWarning($"[menu] title menu reset: {e.Message}"); }
+    }
 
     [HarmonyPatch(typeof(TitleScreen), nameof(TitleScreen.RefreshButtons))]
     private static class P_TitleRefresh { private static void Postfix(TitleScreen __instance) { if (NativeCode.Is<TitleScreen>(__instance)) InjectTitleButton(__instance); } }
@@ -276,6 +310,28 @@ internal static class NativeMenus
     // ---------------------------------------------------------------- submenu
 
     internal static void OpenTitleMenu() => ShowPage(MainPage);
+
+    /// <summary>Test harness: the title list's visible buttons, in order, and what is selected.</summary>
+    internal static string TitleMenuState()
+    {
+        try
+        {
+            var title = GameBridge.FindTitleScreen();
+            var container = title?.optionsButton?.transform.parent;
+            if (container == null) return "no title menu";
+            var names = new List<string>();
+            for (int i = 0; i < container.childCount; i++)
+            {
+                var c = container.GetChild(i).gameObject;
+                if (!c.activeInHierarchy) continue;
+                var t = c.GetComponentInChildren<TextMeshProUGUI>(true);
+                names.Add(t != null && !string.IsNullOrEmpty(t.text) ? t.text : c.name);
+            }
+            var sel = EventSystem.current?.currentSelectedGameObject;
+            return $"[{string.Join(" | ", names)}] selected {(sel == null ? "none" : sel.name)}";
+        }
+        catch (Exception e) { return "state: " + e.Message; }
+    }
 
     /// <summary>Test harness: press the visible entry with this label.</summary>
     internal static void ClickEntry(string label) => ClickEntry(_labels.FindIndex(l => l == label));
@@ -415,6 +471,23 @@ internal static class NativeMenus
         catch { }
     }
 
+    // A save was chosen to start the game: the menu is hidden until the game leaves the title screen (or the start
+    // falls through and the page comes back).
+    private static bool _starting;
+
+    /// <summary>
+    /// The host chose a save: hide the whole menu and drop the cursor right away. Otherwise it stayed visible, and
+    /// could still be used, while the guests got ready and the game loaded.
+    /// </summary>
+    private static void HideForStart()
+    {
+        _starting = true;
+        foreach (var b in _entries) if (Alive(b)) SetActive(b.gameObject, false);
+        if (Alive(_status)) SetActive(_status.gameObject, false);
+        try { EventSystem.current?.SetSelectedGameObject(null); } catch { }
+        Plugin.Log.LogInfo("[menu] save chosen: title menu hidden while the game starts");
+    }
+
     private static void CloseSubmenu(bool reselect)
     {
         if (!SubmenuOpen) return;
@@ -485,7 +558,17 @@ internal static class NativeMenus
     public static void Update()
     {
         if (!SubmenuOpen || _title == null) return;
-        if (!GameBridge.AtTitleScreen) { CloseSubmenu(false); return; }
+        if (!GameBridge.AtTitleScreen) { _starting = false; CloseSubmenu(false); return; }
+        if (_starting)
+        {
+            // Still at the title: wait for the game to start, unless the start fell through (an error, a guest left).
+            var phase = Session.Instance.Phase;
+            if (phase == Phase.AwaitingReady || phase == Phase.Running) return;
+            _starting = false;
+            Plugin.Log.LogInfo("[menu] the start didn't happen: title menu back");
+            ShowPage(MainPage);
+            return;
+        }
         if (!_popupOpen && BackPressed())
         {
             // Same as the page's own Back entry: a sub-page goes back to the main page, the main page closes.
@@ -572,7 +655,7 @@ internal static class NativeMenus
         foreach (var slot in GameBridge.ListSaveSlots().Take(6))
         {
             var sl = slot;
-            yield return (sl.label, () => Session.Instance.StartFromSave(sl.index, sl.auto));
+            yield return (sl.label, () => { HideForStart(); Session.Instance.StartFromSave(sl.index, sl.auto); });
         }
         yield return ("Back", () => ShowPage(MainPage));
     }
