@@ -1,6 +1,9 @@
-# Drop-in: findings and Stage 3 handoff (2026-11-15, §12 and §13 on 2026-11-16)
+# Findings
 
-Companion to [drop-in-plan.md](drop-in-plan.md) (status, risks) and [drop-in-spikes.md](drop-in-spikes.md) (spike results). This file records what was found while finishing Stage 2 and starting Stage 3, and what is left.
+What was found while building the mod: causes, fixes and measurements, numbered so other docs can cite them as "findings §N". The plan these serve is in [PLAN.md](PLAN.md); the current state is in [STATUS.md](../STATUS.md).
+
+*Sections 1–11 from 2026-11-15, §12 and §13 from 2026-11-16, §14 (the spike results) from 2026-11-15.*
+
 
 ## 1. Window tiling: works, no change
 
@@ -449,3 +452,73 @@ Fix: `ReserveSummonSlot`, `DoPermanentSlotReservation`, `GetEnemyPrefabsToSummon
 - Run `tests/display-prefs.sh save` before a test session and `restore` after.
 - Delete `SosOnlineTest-*` and `SosOnlineSession-<port>` folders in the save folder afterwards. Leave `SosOnlineSession` and `SosOnlineBackup` alone.
 - Don't build while a test game runs: the build copies the DLL into the game folder.
+
+## 14. Drop-in spikes: results (2026-11-15)
+
+The spikes that gated Stages 2 and 3; their instructions are in [PLAN.md](PLAN.md#appendix-spike-instructions).
+
+### Prerequisite — state log (2026-11-15): pass
+
+- Components logged: `lvl`, `scenes`, `party` (name/facing angle), `stats` (HP/MP per current party member), `gold` (currency amounts), `inv` (kinds/total), `combat` (`off`, or each actor's HP), `npcs` (every active `NPCController`, name and position to 0.1 m), `pos` (party positions, compared with the existing 2 cm drift correction). `RngProbe` is gone.
+- Walk scripts, two instances: the 61 snapshots up to frame 1800 match. `--sosonline-hpdiverge=1800` on the guest (ZALE 12 → 11) is reported on the next snapshot, with that component only: `frame 1830 mismatch #1: stats differs (local [ZALE:11/3,VALERE:11/2,GARL:15/2])`.
+- Cost: 3.4 ms per snapshot on average, 25.6 ms at worst (81 snapshots). Mostly `FindObjectsOfType<NPCController>`. At the default interval that is 0.1 ms per frame; Stage 0's rotating subset is not needed yet.
+- `gold` is empty in the test save (the early-game party owns no currency yet). Spike B should use a save that has some.
+
+### Spike A — reload in place (2026-11-15): pass
+
+How: `GameBridge.ReloadInPlace` calls `SaveManager.LoadSaveSlotAndSetLastIndex(slot)` (its `onSaveSlotLoaded` restores the managers), then `LevelManager.LoadLevel` with `showTransition = true`, `removeTransitionWhenDone = true` and a `GameplayLevelInitializerParams` built from the slot's `checkpointData`. Lockstep keeps running; nothing goes through the title screen.
+
+| Check | Result |
+|---|---|
+| Title screen in screenshots | None. The game's fade covers the load (frame 1500 mid-fade, 1600 fully visible). |
+| State logs after the reload | Identical on both PCs: 31 of 31 snapshots, in each of four runs. |
+| Guest controls a character again | Yes, with no new Join press. The co-op player survives the reload (`P2 playing` never goes false); the re-armed auto-join finds it already playing. |
+| F+120 to party controllable | 76–84 frames of loading (1.3–1.4 s), then the fade. The guest's scripted walk at frame 1500 moves its character. Well under 300 frames. |
+| Loading-finished gap between PCs | Without the barrier: 0 frames for the in-place reloads (1497/1497, 1499/1499, 1496/1496); 1–3 frames for the title-screen load at session start (333/335, 331/330, 327/327). One such gap produced `frame 330 mismatch: npcs differs`. With Stage 0's barrier, both PCs end every load on the same frame (333/333, 1504/1504); the hold costs 8–9 frames on loopback. |
+| Where the party reappears | At `checkpointData.position`, the point where the party entered the area (here (9.08, 1.00, 13.83)), not where it stood. Without initializer params the party lands at a level default ((14.67, −1.00, 67.28)) and the screen stays black. |
+
+Position restore: `UpdateCheckpointData` is not needed. `GameplayLevelInitializerParams.spawnPosition` (with `spawnPositionSet = true`) and `playerOrientation` place the leader exactly: 0.00 m from where it stood at the reload frame. The game re-forms the followers around the leader, so `--sosonline-reloadpos` also moves every party member back to its own position on fixed frame F+240. After that, the leader and P2 are within 0.01 m, and Garl (AI follower) is 0.47 m from where the game placed him before resuming his follow. The logs still match.
+
+For Stage 2:
+- Take the positions on the reload frame, not the save frame; the party keeps moving in between (2.5 m in this test).
+- The position fix-up frame has to come after the load ends. With the barrier, the release frame is known on every PC, so use release + a few frames instead of a fixed offset.
+- Inputs a player makes between the reload and the fix-up are undone for their character. Either block movement until the fix-up, or apply it on the release frame.
+- `--sosonline-reload` and `--sosonline-reloadpos` remain as regression tests.
+
+### Spike B — save vs live state (2026-11-15): partial
+
+Setup differs from the instructions in three ways, all scripted in `tests/spike-b.sh`:
+- No save had to be prepared. Slot 0 starts at the Forbidden Cavern entrance; run A walks out to the world map and back in, so the **third** level load is the area entry (`--sosonline-entryload=3`). The cavern's enemies don't patrol, so the battle is started by `--sosonline-encounterat=700` on both runs, on frame L + 700.
+- L is the loading barrier's release frame for the entry load. The release is decided a few frames ahead, so B knows L_B before it captures the inputs for that frame. C came on L itself in every run (`C=f1104 (L+0)`), so nothing changes between L and the autosave.
+- B needs A's save index (`SOS_SaveDataIndex.sos`) next to the autosave, or the game reports the autosave slot as missing. Both are copied into B's sandbox (`--sosonline-sandboxfile`). Both runs use the same `--sosonline-seed`, and B reseeds the RNG as on A's frame L_A + k.
+
+Result over 3,896 frames from L (walk, battle, after):
+
+| Run | Identical until | First difference |
+|---|---|---|
+| 1 | L+1859 | `combat` for 1 frame: Luslug_A 13 HP on A, 14 on B (a hit applied one frame apart), identical again after |
+| 2 (`--sosonline-trace`) | L+1120 | `combat` at L+1121, the same kind of one-frame hit timing; then positions, facing, NPCs |
+| 3 (exact party positions transferred at L) | L+1859 | as run 1, then a follower 8 cm off after the battle (L+1903), facing (L+1928), NPCs (L+1975) |
+| 4 (`--sosonline-trace`) | L+1903 | follower position after the battle |
+
+- The save reproduces the area-entry state: every component is identical at L and for the next 1,120 to 1,900 frames, including the first half of the battle. Party positions agree to the bit: the transfer at L corrected 0.0 on every axis.
+- What differs is battle timing, by one frame, at varying points from run to run, with knock-on differences after it. The trace shows identical decisions on the same frames, but the game's timed-input windows are absolute `Time.time` values: `afterEnd=56.265` on A against `43.175` on B. A replaying joiner cannot share the host's time base.
+- **This is not specific to the save.** The same check on a normal live two-instance session with a battle (`--sosonline-encounter=1500 --sosonline-bot`) also reports `party differs` at frame 1740 and `npcs differs` at 2040, and the guest corrects all three party positions on every snapshot during the battle. The old snapshot couldn't see either.
+
+**Rerun with the shared game clock (finding 8 fixed): pass.** `tests/spike-b.sh`, with the replay adopting the recording's clock at L: all 3,898 frames from L identical, bit for bit (positions too), 1,383 of them in battle.
+
+Against the pass condition (every component identical for 3,000 frames including the battle) the original runs were a fail. Against the question it was meant to answer (does the save reproduce live state) it is a pass. What blocks Stage 3 is the same drift that live sessions already have; see the plan's new finding 8.
+
+### Spike C — replay speed (2026-11-15): pass (cameras off)
+
+Run B replayed with `--sosonline-ff`, snapshots every 30 frames (every frame costs about 3.4 ms and caps the speed near 300 fps):
+
+| | Free roaming | Battle | Loading |
+|---|---|---|---|
+| Cameras on | 147–156 fps (2.5×) | 143–145 fps (2.4×) | 218–444 fps |
+| Cameras off | 1,008 fps (16.8×) | 984 fps (16.4×) | 1,325–1,572 fps |
+
+- Correctness: with cameras off and snapshots every frame, B matches A up to L+1120 and first differs on the battle hit at L+1121. Unaccelerated runs also diverged on that hit (run 2), so neither fast-forwarding nor disabling the cameras adds visible divergence of its own. No battle-free run longer than 1,120 frames was tested.
+- Loading takes the same wall-clock time, so it spans many more frames (5,768 frames at 1,325 fps). Lining up on L absorbs that.
+- Rule for Stage 3: catch-up time = frames since area entry ÷ (speed − 60), since the session keeps moving. At about 1,000 fps with cameras off, a 60 s cut-off covers about 56,000 frames, or 15 minutes since the area entry. With cameras on (150 fps) it covers 5,400 frames, or 90 s.
+- Not handled: the joiner's screen during catch-up (cameras off means a static frame or an overlay), and the game's own visibility callbacks (`ObjectBecameVisible`) while cameras are off. Neither showed up in the comparison, but a battle-free run longer than 1,120 frames would confirm it.
