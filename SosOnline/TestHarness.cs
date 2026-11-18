@@ -242,6 +242,9 @@ internal static class TestHarness
             case 7: Plugin.Log.LogInfo($"[test] hosting: {State()}"); UI.NativeMenus.ClickEntry("Load Game"); _tfAt = now + 2; break;
             case 8: Plugin.Log.LogInfo($"[test] saves: {State()}"); UI.NativeMenus.ClickEntry(0); Plugin.Log.LogInfo($"[test] save chosen, same frame: {State()}"); _tfAt = now + 0.3; break;
             case 9: Plugin.Log.LogInfo($"[test] save chosen, 0.3 s: {State()}"); Shot("ui-start-chosen"); _tfAt = now + 8; break;
+            // The co-op version line belongs to the title screen only.
+            case 10: Plugin.Log.LogInfo($"[test] 8 s after the start: at title {GameBridge.AtTitleScreen}, version line shown {UI.VersionLabel.Shown}"); Shot("ui-ingame-8s"); _tfAt = now + 12; break;
+            case 11: Plugin.Log.LogInfo($"[test] 20 s after the start: at title {GameBridge.AtTitleScreen}, version line shown {UI.VersionLabel.Shown}"); Shot("ui-ingame-20s"); _tfAt = now + 1; break;
             default: Plugin.Log.LogInfo("[test] title flow test done"); Session.Instance.Leave(); Application.Quit(); _tfStep = 99; return;
         }
         _tfStep++;

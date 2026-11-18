@@ -47,12 +47,23 @@ internal static class VersionLabel
         }
     }
 
-    /// <summary>Main thread, every frame; does its work twice a second while the title screen is up.</summary>
+    /// <summary>
+    /// Main thread, every frame: hidden at once whenever the title screen isn't up (its root canvas may outlive the
+    /// title), else updated twice a second.
+    /// </summary>
     public static void Update()
     {
+        if (!GameBridge.AtTitleScreen || !TitleShowing())
+        {
+            if (Alive(_label) && _label.gameObject.activeSelf)
+            {
+                _label.gameObject.SetActive(false);
+                Plugin.Log.LogInfo("[menu] co-op version line hidden (title screen gone)");
+            }
+            return;
+        }
         if (Time.unscaledTime < _next) return;
         _next = Time.unscaledTime + 0.5f;
-        if (!GameBridge.AtTitleScreen) return;
         try
         {
             if (!Alive(_label) || !Alive(_source)) _label = Create();
@@ -68,6 +79,17 @@ internal static class VersionLabel
             Plugin.Log.LogWarning($"[menu] version label: {e.Message}");
             _next = Time.unscaledTime + 10f;
         }
+    }
+
+    /// <summary>Test harness: whether the co-op version line is on screen.</summary>
+    internal static bool Shown => Alive(_label) && _label.gameObject.activeInHierarchy;
+
+    /// <summary>The game's own version line is drawn (checked every frame): ours shows only alongside it.</summary>
+    private static bool TitleShowing()
+    {
+        if (!Alive(_label)) return true; // not made yet: Update makes it
+        try { return Alive(_source) && _source.activeInHierarchy; }
+        catch { return false; }
     }
 
     private static TextMeshProUGUI Create()

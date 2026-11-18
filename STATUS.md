@@ -8,7 +8,7 @@ Current state of the project, for whoever picks it up next. Update it at the end
 
 - **Branch:** `main`, pushed; everything is released in `v0.1.61`.
 - **Latest release:** `v0.1.61`, published 2026-11-18: save backups (below). Tested before it: save-sync, resync, end-playing, dropin-catchup and dropin-reload, all 0 differences, the real save folder unchanged. Before: `v0.1.60`, published 2026-11-18: manual updates, the co-op version line, the reorganised Online page (Options sub-page, Title Case, B on popups). Sweep before it (2026-11-18): 20 of 21 passed (dropin-reload's host gave up with no session after 300 s, passed on a rerun); battle-turns-1 had the intermittent battle split (guest mismatch at f1800, re-synced by itself), runs 2 and 3 had 0 mismatches. Before: `v0.1.56` (`844ff2f`). Earlier ones still around: `v0.1.53`, `v0.1.52` (has the controller crash below), `v0.1.45`.
-- **Installed on the user's PC:** a test build of the save backups (`…-modified`, same code as v0.1.61).
+- **Installed on the user's PC:** a test build (`…-modified`): v0.1.61 plus the version-line fix below (uncommitted).
 - **Updates are manual from v0.1.60 on.** v0.1.56 and older download v0.1.60 at their next start (the friend, P2, gets it that way, one last time); after that, *(Update available)* on the title screen and *Check for updates*.
 - **Test save:** tests run from the user's newest save (`--sosonline-start=0a`). Last known: the Forbidden Cavern, Bosslug fight at `ENCOUNTER=650`, a campfire 8 m from the start. It changes whenever the user plays.
 
@@ -29,6 +29,8 @@ From the first session on v0.1.53 (user's report, 2026-11-16 late): the Bosslug 
 11. Older, not touched: guest crash after a re-sync in a battle (no repro; the log zip now includes the crash dump); `Session.MinAutoDelay` 4 (consider 2 after a stable Steam session); folded methods not covered by the deterministic-random wrappers (`CombatActor.OnPlayerPartyTurnDone`, `OnAnyCharacterTurnDone`, `OnPlayerCharacterTurnDone`, `OnEnemyCharacterTurnDone`); probes (turn, damage, clock lines) stay until battles are confirmed over Steam.
 
 ## Recently done
+
+- **Not committed yet (2026-11-18):** the co-op version line hides on the frame the game's own version line hides, or whenever the title screen is gone (it was still alive during the load after choosing a save). Tested with `--sosonline-udp=27100 --sosonline-titleflow` (new checks at 8 s and 20 s into the game). README has no screenshots yet: `tests/readme-shots.sh` exists, its 273 shots predate the Online page changes.
 
 - **v0.1.61 (2026-11-18): save backups** (`Game/SaveBackup.cs`), after the playtest's save was lost (the second lost save; Steam Cloud only had the same files). Every save write or delete, and a new session replacing a guest's mirror, keeps the old file in `SosOnlineBackup/Saves` or `Session saves` (last 50 + one per day for 30 days); session snapshots in `SosOnlineBackup/Sessions` at co-op start, join, end and desync (last 30); the session's saves go into Send Logs to Host; test runs may only write saves in test folders (else `SosOnlineTest-blocked`, logged as an error). Tested on UDP: save-sync (manual save, logs zip with `saves/`), resync (snapshots 'desync P2' on the host, 'desync' and 'joined' on the guest; 250 snapshots, 0 differ), end-playing ('co-op ended' on both; the guest's old mirror backed up before the new session's saves), `--sosonline-guardtest`; the user's real save folder was byte-for-byte unchanged; dropin-catchup and dropin-reload 0 differ with 'joined' snapshots on the joiner.
 
