@@ -15,6 +15,14 @@ Play **Sea of Stars: Sunset Edition** co-op online with your Steam friends. The 
 - **Fixes itself.** If a friend's game gets out of sync, it corrects itself or rejoins in a few seconds.
 - **Signed updates, on your terms.** The title screen shows the mod's version and says when an update is available; you choose when to install it.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![The Online page on the title screen](docs/screenshots/online-menu.png) | ![Online options, with help text](docs/screenshots/online-options.png) |
+| ![Assign Players, online](docs/screenshots/assign-players.png) | ![A battle with two players](docs/screenshots/battle.png) |
+| ![Three players in one game](docs/screenshots/three-players.png) | ![Two players exploring, in sync](docs/screenshots/two-players.png) |
+
 ## Installation
 
 > [!WARNING]
