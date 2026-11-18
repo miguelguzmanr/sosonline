@@ -854,6 +854,7 @@ internal sealed class Session
                 int divergedAt = r.ReadInt32();
                 if (peer == null || peer.Pending || peer.Resyncing || Phase != Phase.Running) return;
                 Plugin.Log.LogWarning($"[resync] {peer.Name}: diverged at f{divergedAt} ({reason}); dropping in again");
+                SaveBackup.SnapshotSession($"desync P{peer.Slot + 1}");
                 peer.Resyncing = true;
                 peer.DivergedAt = divergedAt;
                 double now = Now;
@@ -1255,6 +1256,7 @@ internal sealed class Session
         });
         Phase = Phase.Running;
         Status = "Co-op running.";
+        SaveBackup.SnapshotSession(startFrame > 0 ? "joined" : "co-op started");
         Toast.Show(startFrame > 0 ? "Joining…" : LocalSlot > 0 ? "Co-op started. Joining the party…" : "Co-op started");
     }
 
@@ -1315,6 +1317,7 @@ internal sealed class Session
         _nextSoloTry = 0;
         _soloLeavesUntil = Now + 600;
         Plugin.Log.LogInfo("[session] back to a solo game: this PC's devices on P1, other players leave");
+        SaveBackup.SnapshotSession("co-op ended");
         TrySoloLeaves();
     }
 
@@ -1414,6 +1417,7 @@ internal sealed class Session
                 // Recover: leave on a frame the host picks, then drop in again with a reload in place (Stage 2).
                 _resyncing = true;
                 Plugin.Log.LogWarning($"[resync] f{frame} this PC diverged ({Sync.LastDesyncReason}); asking the host to re-sync");
+                SaveBackup.SnapshotSession("desync");
                 var (w, ms) = Protocol.Begin(Msg.ResyncRequest);
                 w.Write(Sync.LastDesyncReason ?? "");
                 w.Write(frame);

@@ -64,6 +64,13 @@ At start the mod makes one request to GitHub to see whether there's a newer rele
 - Use a gamepad or keyboard; the mouse is not synchronized.
 - Saves made during co-op are the host's. Options (volume, display) stay each PC's own.
 
+**Backups.** The mod keeps old versions of your saves, so a save that gets overwritten isn't lost. They're in your save folder (`%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars`), under `SosOnlineBackup`:
+- `Saves`: earlier versions of each of your save files (the last 50, plus one per day for 30 days).
+- `Session saves`: the same for the host's saves your game played during co-op.
+- `Sessions`: the saves as they were when co-op started, ended, or got out of sync.
+
+To go back to one, quit the game and copy the file over the one in the save folder, renamed to its original name (for example `Autosave_SOS_SaveSlot0.sos`).
+
 ## Known limitations
 
 - A friend joining mid-session waits for a moment the game allows saving; sometimes everyone sees a short fade and about 2 seconds of progress is undone.
@@ -73,7 +80,7 @@ At start the mod makes one request to GitHub to see whether there's a newer rele
 
 ## Something went wrong?
 
-**Friends:** choose **Send logs to host** (pause screen, or title screen → **Online** → **Options**). Your game sends your recent logs, and a crash dump if the game crashed, to the host only.
+**Friends:** choose **Send logs to host** (pause screen, or title screen → **Online** → **Options**). Your game sends your recent logs, a copy of the session's save, and a crash dump if the game crashed, to the host only.
 
 **Host:** press **F8** → **Open logs folder** (or title screen → **Online** → **Options** → **Open Logs Folder**), and attach the newest `sosonline-*.log` and `state-*.log` to an [issue](https://github.com/miguelguzmanr/sosonline/issues), with roughly what happened and when. The logs contain the Steam names of the players in the session; nothing else personal.
 

@@ -75,7 +75,12 @@ internal static class SaveMirror
     public static void BeginReceive()
     {
         Directory.CreateDirectory(MirrorDir);
-        foreach (var f in Directory.GetFiles(MirrorDir)) File.Delete(f);
+        // A guest's mirror may hold the only copy of an earlier session's progress: keep it before it's replaced.
+        foreach (var f in Directory.GetFiles(MirrorDir))
+        {
+            if (f.EndsWith(".sos", StringComparison.OrdinalIgnoreCase)) SaveBackup.BeforeWrite(f, "a new session's saves");
+            File.Delete(f);
+        }
     }
 
     public static void WriteFile(string name, byte[] data)
@@ -154,7 +159,9 @@ internal static class SaveMirror
             string before = __1;
             try { if (NativeCode.Is<SaveLoadStandalone>(__instance)) __1 = Redirect(__1); }
             catch (Exception e) { Plugin.Log.LogError($"[saves] redirect failed for {before}: {e}"); }
+            try { __1 = SaveBackup.GuardTestWrite(__1); } catch (Exception e) { Plugin.Log.LogError($"[saves] test guard failed for {__1}: {e}"); }
             Plugin.Log.LogInfo($"[saves] write {before} -> {__1} (thread {Environment.CurrentManagedThreadId})");
+            SaveBackup.BeforeWrite(SaveBackup.FullPath(__1), "a save");
         }
     }
 
@@ -162,5 +169,14 @@ internal static class SaveMirror
     private static class P_Load { private static void Prefix(SaveLoadStandalone __instance, ref string __0) { if (NativeCode.Is<SaveLoadStandalone>(__instance)) __0 = Redirect(__0); } }
 
     [HarmonyPatch(typeof(SaveLoadStandalone), nameof(SaveLoadStandalone.DeleteFile))]
-    private static class P_Delete { private static void Prefix(SaveLoadStandalone __instance, ref string __0) { if (NativeCode.Is<SaveLoadStandalone>(__instance)) __0 = Redirect(__0); } }
+    private static class P_Delete
+    {
+        private static void Prefix(SaveLoadStandalone __instance, ref string __0)
+        {
+            if (!NativeCode.Is<SaveLoadStandalone>(__instance)) return;
+            __0 = Redirect(__0);
+            try { __0 = SaveBackup.GuardTestWrite(__0); } catch (Exception e) { Plugin.Log.LogError($"[saves] test guard failed for {__0}: {e}"); }
+            SaveBackup.BeforeWrite(SaveBackup.FullPath(__0), "a delete");
+        }
+    }
 }

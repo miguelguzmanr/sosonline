@@ -1,3 +1,4 @@
+using SosOnline.Game;
 using System;
 using BepInEx;
 using BepInEx.Logging;
@@ -32,6 +33,7 @@ public sealed class Plugin : BasePlugin
             ClassInjector.RegisterTypeInIl2Cpp<OnlineBehaviour>();
             AddComponent<OnlineBehaviour>();
             Settings.Bind(Config);
+            SaveBackup.Init();
             TestHarness.Init();
             SosOnline.Update.AutoUpdate.Start();
             GameClock.Install();

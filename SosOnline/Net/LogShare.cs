@@ -1,3 +1,4 @@
+using SosOnline.Game;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,6 +67,8 @@ internal static class LogShare
         }
         string output = Path.Combine(bepinex, "LogOutput.log");
         if (File.Exists(output)) files.Add(("bepinex/LogOutput.log", output));
+        // The session's saves (about 24 KB each): what a desync report needs most, and a copy of the progress.
+        files.AddRange(SaveBackup.SessionFilesForLogs());
 
         // The game writes no Player.log; a crash leaves a Windows crash dump instead (a snapshot of the game's memory).
         // Only one made since the older of the two starts above, so an old crash is never sent.

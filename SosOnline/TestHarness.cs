@@ -44,6 +44,8 @@ namespace SosOnline;
 ///   --sosonline-updatecheck       title screen: Online page, Check for updates; quits after 90 s
 ///   --sosonline-fakeavailable=V   act as if the release lookup found V (the version line says "(Update available)")
 ///   --sosonline-versionshot       title screen: screenshot ui-version with the co-op version line, then quit
+///   --sosonline-sendlogs=F        guest: Send Logs to Host once lockstep reaches frame F
+///   --sosonline-guardtest         log where the test-run save guard sends a few paths (writes nothing)
 ///   --sosonline-onlineshot        title screen: Online page (ui-online-page), Host (ui-online-hosting), Options
 ///                                 (ui-online-options), Back, Load Game (ui-online-saves), Back, stop hosting, quit. Use with --sosonline-udp=PORT.
 ///   --sosonline-popupanswer=L,... answer the mod's popups that offer one of these labels ("_" for a space)
@@ -122,6 +124,12 @@ internal static class TestHarness
             // player's real autosave twice (2026-11-16).
             SaveMirror.UseSandbox("SosOnlineTest-steam");
             SaveMirror.MirrorFolder = "SosOnlineSession-steam";
+        }
+        if (Args.ContainsKey("guardtest"))
+        {
+            // Only asks the guard: nothing is written.
+            foreach (var name in new[] { "SOS_SaveSlot0", $@"{SaveMirror.SandboxFolder}\SOS_SaveSlot0", $@"{SaveMirror.MirrorFolder}\SOS_SaveSlot0", @"SosOnlineSession\SOS_SaveSlot0", @"..\SOS_SaveSlot0" })
+                Plugin.Log.LogInfo($"[test] guard: {name} -> {SaveBackup.GuardTestWrite(name)}");
         }
         if (Args.TryGetValue("fakeupdate", out var fu)) SosOnline.Update.AutoUpdate.FakeDownloaded(Version.Parse(fu));
         if (Args.TryGetValue("fakeavailable", out var fa)) SosOnline.Update.AutoUpdate.FakeAvailable(Version.Parse(fa));
@@ -300,6 +308,7 @@ internal static class TestHarness
         }
         _vsStep++;
     }
+    private static bool _logsSent;
     private static double _ucAt;
     private static int _toStep;
     private static double _toAt;
@@ -364,6 +373,13 @@ internal static class TestHarness
         if (Args.ContainsKey("updatecheck")) UpdateCheckTest();
         if (Args.ContainsKey("versionshot")) VersionShotTest();
         if (Args.ContainsKey("onlineshot")) OnlineShotTest();
+        if (!_logsSent && Args.TryGetValue("sendlogs", out var sl) && Session.Instance.Phase == Phase.Running
+            && Session.Instance.Engine.AppliedFrame >= int.Parse(sl))
+        {
+            _logsSent = true;
+            Plugin.Log.LogInfo($"[test] f{Session.Instance.Engine.AppliedFrame} sending logs to the host");
+            Session.Instance.SendLogsToHost();
+        }
         if (Args.ContainsKey("titleflow")) TitleFlowTest();
         if (Args.Count == 0 || _autoDone) return;
         var session = Session.Instance;
