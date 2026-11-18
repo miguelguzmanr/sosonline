@@ -4,7 +4,8 @@
 # Each guest gets port HOSTPORT+n and joins HOSTPORT; delay_s staggers late joiners. Returns immediately.
 # Windows are tiled side by side (host on the left); set NO_TILE=1 to leave them where Unity puts them.
 . "$(dirname "$0")/game-dir.sh"
-COMMON="-screen-fullscreen 0 -screen-width 640 -screen-height 360"
+# WIN_W/WIN_H change the window size (e.g. 1280x720 for readme-shots.sh).
+COMMON="-screen-fullscreen 0 -screen-width ${WIN_W:-640} -screen-height ${WIN_H:-360}"
 PLACE="$(cygpath -w "$(cd "$(dirname "$0")" && pwd)/place-window.ps1")" # absolute: launch() changes directory
 
 # launch INDEX ARGS...: starts an instance and moves its window to tile slot INDEX.

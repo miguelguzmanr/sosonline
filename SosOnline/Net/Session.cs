@@ -455,7 +455,7 @@ internal sealed class Session
         if (InSession)
         {
             if (LobbyId == lobby) return;
-            if (Phase == Phase.Running) { Toast.Show("Leave co-op before joining another game."); return; }
+            if (Phase == Phase.Running) { Toast.Show("Leave co-op before joining another game"); return; }
             Leave();
         }
         Reset();
@@ -502,21 +502,21 @@ internal sealed class Session
     /// <summary>Guest: zip this PC's logs and send them to the host (the player's own choice).</summary>
     public void SendLogsToHost()
     {
-        if (!InSession || IsHost) { Toast.Show("Join a session first."); return; }
-        if (!LogShare.Begin()) { Toast.Show("Your logs are already on their way."); return; }
+        if (!InSession || IsHost) { Toast.Show("Join a session first"); return; }
+        if (!LogShare.Begin()) { Toast.Show("Your logs are already on their way"); return; }
         Toast.Show("Packing your logs…");
     }
 
     /// <summary>Host: ask every connected friend for their logs (they see a toast and decide).</summary>
     public void AskForLogs()
     {
-        if (!IsHost || _peers.Count == 0) { Toast.Show("No friends connected."); return; }
+        if (!IsHost || _peers.Count == 0) { Toast.Show("No friends connected"); return; }
         foreach (var peer in _peers.Values)
         {
             var (w, ms) = Protocol.Begin(Msg.LogRequest);
             Send(peer.Id, ms, true);
         }
-        Toast.Show($"Asked {string.Join(", ", _peers.Values.Select(p => p.Name))} for logs.");
+        Toast.Show($"Asked {string.Join(", ", _peers.Values.Select(p => p.Name))} for logs");
     }
 
     private void UpdateLogShare()
@@ -775,7 +775,7 @@ internal sealed class Session
                 {
                     // Not refused (the protocol matched), but a different build is the first suspect if anything breaks.
                     Plugin.Log.LogWarning($"[session] {name} runs mod build {modVersion}, this PC {SessionLogs.Build}");
-                    Toast.Show($"{name} has a different version ({modVersion}).");
+                    Toast.Show($"{name} has a different version ({modVersion})");
                 }
                 break;
             }
@@ -839,7 +839,7 @@ internal sealed class Session
                 string path = LogShare.Receive(from, peer.Name, id, index, count, piece);
                 if (path == null) return;
                 Plugin.Log.LogInfo($"[logs] received {peer.Name}'s logs: {path}");
-                Toast.Show($"Received {peer.Name}'s logs (Open logs folder).");
+                Toast.Show($"Received {peer.Name}'s logs (Open logs folder)");
                 var (w, ms) = Protocol.Begin(Msg.LogReceived);
                 Send(from, ms, true);
                 break;
@@ -890,7 +890,7 @@ internal sealed class Session
                         : $"Connected as P{LocalSlot + 1}. Waiting for the host to start…";
                     Toast.Show(WaitingForResync
                         ? $"Queued in {SlotName[0] ?? Transport.Describe(HostId)}'s game. You'll join as soon as their game allows saving."
-                        : $"Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1}.");
+                        : $"Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1}");
                     Plugin.Log.LogInfo($"[session] welcomed as slot {LocalSlot}");
                 }
                 break;
@@ -898,7 +898,7 @@ internal sealed class Session
                 Toast.Show($"{SlotName[0] ?? "The host"} received your logs. Thanks!");
                 break;
             case Msg.LogRequest:
-                Toast.Show($"{SlotName[0] ?? "The host"} asks for your logs (check the Online menu).");
+                Toast.Show($"{SlotName[0] ?? "The host"} asks for your logs (check the Online menu)");
                 break;
             case Msg.Reject:
                 SetError("Can't join: " + r.ReadString());
@@ -985,7 +985,7 @@ internal sealed class Session
                     _nextJoinTry = 0;
                     _joinTries = 0;
                     Status = "Playing co-op.";
-                    Toast.Show(Rejoining ? "You're back in sync." : "You're in! Joining the party…");
+                    Toast.Show(Rejoining ? "Welcome back!" : "You're in! Joining the party…");
                     Rejoining = false;
                 }
                 break;
@@ -1065,7 +1065,7 @@ internal sealed class Session
                 _transferId = id;
                 SaveMirror.ReloadSaves();
                 _awaitingReturnReload = true;
-                Toast.Show("The host is returning to the area start.");
+                Toast.Show("The host is returning to the area start");
                 Plugin.Log.LogInfo($"[return] got {files.Count} area entry save file(s) (transfer {id})");
                 break;
             }
@@ -1255,7 +1255,7 @@ internal sealed class Session
         });
         Phase = Phase.Running;
         Status = "Co-op running.";
-        Toast.Show(startFrame > 0 ? "Joining…" : LocalSlot > 0 ? "Co-op started. Joining the party…" : "Co-op started.");
+        Toast.Show(startFrame > 0 ? "Joining…" : LocalSlot > 0 ? "Co-op started. Joining the party…" : "Co-op started");
     }
 
     private void StopLockstep(string reason)
@@ -1651,7 +1651,7 @@ internal sealed class Session
             SendWelcome(peer);
         }
         BroadcastRoster();
-        Toast.Show($"{names} is joining.");
+        Toast.Show($"{names} is joining");
     }
 
     private void BackToSolo()
@@ -1843,7 +1843,7 @@ internal sealed class Session
             Plugin.Log.LogInfo("[resync] left the run; waiting to drop in again");
             return;
         }
-        Toast.Show("You left co-op but may continue playing.");
+        Toast.Show("You left co-op but may continue playing");
         AfterLockstep();
         Leave();
     }
@@ -2014,7 +2014,7 @@ internal sealed class Session
     {
         if (!CanReturnToAreaStart)
         {
-            Toast.Show(IsHost && Phase == Phase.Running && !_peers.Values.Any(p => p.Pending) ? "Nobody is waiting to join." : "Couldn't return to the area start.");
+            Toast.Show(IsHost && Phase == Phase.Running && !_peers.Values.Any(p => p.Pending) ? "Nobody is waiting to join" : "Couldn't return to the area start");
             Plugin.Log.LogInfo("[return] not possible now");
             return;
         }
@@ -2058,7 +2058,7 @@ internal sealed class Session
         if (!IsHost || Phase != Phase.Running) { _return = null; return; }
         _joiners.RemoveAll(id => !_peers.ContainsKey(id));
         string fail = _area.L != _return.L ? "The party left the area. Return cancelled."
-            : Now - _return.Since > ReturnTimeoutS ? "Couldn't return to the area start." : null;
+            : Now - _return.Since > ReturnTimeoutS ? "Couldn't return to the area start" : null;
         if (fail != null)
         {
             Toast.Show(fail);
@@ -2221,7 +2221,7 @@ internal sealed class Session
             var (w, ms) = Protocol.Begin(Msg.DropInAbort);
             Send(peer.Id, ms, true);
         }
-        Toast.Show($"{string.Join(", ", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this.");
+        Toast.Show($"{string.Join(", ", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this");
     }
 
     private void ReloadInPlace(int frame, int saveSlot, PartySpawn spawn, double timeBase)
@@ -2267,7 +2267,7 @@ internal sealed class Session
         if (GameBridge.IsPlaying(LocalSlot)) { _autoJoin = false; return snap; }
         if (Engine.AppliedFrame < _autoJoinFrom || GameBridge.LoadingLevel || GameBridge.Party?.Leader == null) return snap;
         if (frame < _nextJoinTry) return snap;
-        if (++_joinTries > 12) { _autoJoin = false; Toast.Show("Press Join on your controller to play."); return snap; }
+        if (++_joinTries > 12) { _autoJoin = false; Toast.Show("Press Join on your controller to play"); return snap; }
         _nextJoinTry = frame + 90;
         int join = ActionTable.IndexOf("Join");
         if (join >= 0) snap.Bits[join] |= ActionBits.Button | ActionBits.ButtonDown;
@@ -2323,7 +2323,7 @@ internal sealed class Session
                     peer.CatchUpSince = now;
                     int files = SendSaveFiles(new[] { peer }, true, _area.SaveFiles);
                     Status = $"{peer.Name} is joining…";
-                    Toast.Show($"{peer.Name} is joining.");
+                    Toast.Show($"{peer.Name} is joining");
                     Plugin.Log.LogInfo($"[catchup] {peer.Name}: catching up from the area entry at f{_area.L} ({Engine.AppliedFrame - _area.L} frames ago); sent {files} files");
                     break;
 
@@ -2435,8 +2435,8 @@ internal sealed class Session
         peer.LastInputFrame = at + Engine.Delay - 1;
         _area.LogRoster(at, slot, true);
         BroadcastRoster();
-        Status = $"{peer.Name} joined.";
-        Toast.Show($"{peer.Name} joined.");
+        Status = $"{peer.Name} joined";
+        Toast.Show($"{peer.Name} joined");
         Plugin.Log.LogInfo($"[catchup] {peer.Name} caught up (at f{joinerFrame}, {Now - peer.CatchUpSince:F1} s after the transfer started); joins as slot {slot} at f{at}");
     }
 

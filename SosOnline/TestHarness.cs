@@ -16,7 +16,9 @@ namespace SosOnline;
 ///   --sosonline-udp=PORT          use loopback UDP instead of Steam (peer id = port)
 ///   --sosonline-host              host automatically
 ///   --sosonline-join=PORT         join a UDP host automatically
-///   --sosonline-start=SLOT[a]     host: start from save SLOT (suffix 'a' = autosave) once guests are in and title is up
+///   --sosonline-start=SLOT[a]     host: start from save SLOT (suffix 'a' = autosave) once guests are in and title is up.
+///                                 SLOT is the file number, counted from 0: the game's "Slot 1" is 0
+///                                 (SOS_SaveSlot0.sos, Autosave_SOS_SaveSlot0.sos). The same holds for --sosonline-play.
 ///   --sosonline-guests=N          guests to wait for before starting (default 1, 0 = solo lockstep)
 ///   --sosonline-delay=N           fixed input delay in frames
 ///   --sosonline-script=FILE       scripted local input: "frame [sys] action holdFrames [axis]" per line
@@ -42,6 +44,8 @@ namespace SosOnline;
 ///   --sosonline-updatecheck       title screen: Online page, Check for updates; quits after 90 s
 ///   --sosonline-fakeavailable=V   act as if the release lookup found V (the version line says "(Update available)")
 ///   --sosonline-versionshot       title screen: screenshot ui-version with the co-op version line, then quit
+///   --sosonline-onlineshot        title screen: Online page (ui-online-page), Host (ui-online-hosting), Options
+///                                 (ui-online-options), Back, Load Game (ui-online-saves), Back, stop hosting, quit. Use with --sosonline-udp=PORT.
 ///   --sosonline-popupanswer=L,... answer the mod's popups that offer one of these labels ("_" for a space)
 ///   --sosonline-npcprobe          log every frame the active NPCs and each NPC's first inactive ancestor change
 ///   --sosonline-summonprobe[=N]   log each summon's slot list, reservations and assignments; N > 0 draws N extra
@@ -161,13 +165,13 @@ internal static class TestHarness
         var title = GameBridge.FindTitleScreen();
         switch (_uiStep)
         {
-            case 1: title.ShowChoices(); _uiAt = now + 2; break;
+            case 1: ShowTitleChoices(title); _uiAt = now + 2; break;
             case 2: Shot("ui-title"); _uiAt = now + 1; break;
             case 3: UI.NativeMenus.OpenTitleMenu(); _uiAt = now + 2; break;
             case 4: Shot("ui-online"); _uiAt = now + 1; break;
             case 5: UI.NativeMenus.ClickEntry("Host"); _uiAt = now + 5; break;
             case 6: Shot("ui-hosting"); _uiAt = now + 1; break;
-            case 7: UI.NativeMenus.ClickEntry("Start"); _uiAt = now + 2; break;
+            case 7: UI.NativeMenus.ClickEntry("Load Game"); _uiAt = now + 2; break;
             case 8: Shot("ui-saves"); Plugin.Log.LogInfo("[test] saves: " + string.Join(" | ", GameBridge.ListSaveSlots().Select(s => s.label))); _uiAt = now + 1; break;
             case 9: Plugin.Log.LogInfo($"[test] lobby={Session.Instance.LobbyId} phase={Session.Instance.Phase}"); Session.Instance.Leave(); _uiAt = now + 2; break;
             case 10: Shot("ui-left"); _uiAt = now + 1; break;
@@ -185,7 +189,7 @@ internal static class TestHarness
         if (_toStep == 0) { if (!GameBridge.AtTitleScreen) return; _toStep = 1; _toAt = now + 5; Plugin.Log.LogInfo("[test] title screen: options test starts in 5 s"); return; }
         if (now < _toAt) return;
         var title = GameBridge.FindTitleScreen();
-        if (_toStep == 1) { title?.ShowChoices(); Plugin.Log.LogInfo("[test] title choices shown"); _toAt = now + 2; }
+        if (_toStep == 1) { ShowTitleChoices(title); Plugin.Log.LogInfo("[test] title choices shown"); _toAt = now + 2; }
         else if (_toStep == 2) { Plugin.Log.LogInfo("[test] opening Options"); title?.OnOptions(); Plugin.Log.LogInfo("[test] OnOptions returned"); _toAt = now + 1; }
         else if (_toStep < 13) { Plugin.Log.LogInfo($"[test] options open, {_toStep - 2} s"); if (_toStep == 5) Shot("ui-options"); _toAt = now + 1; }
         else { Plugin.Log.LogInfo("[test] options test done"); Application.Quit(); }
@@ -197,9 +201,14 @@ internal static class TestHarness
         double now = Time.realtimeSinceStartupAsDouble;
         if (_ucStep == 0) { if (!GameBridge.AtTitleScreen) return; _ucStep = 1; _ucAt = now + 5; return; }
         if (now < _ucAt) return;
-        if (_ucStep == 1) { GameBridge.FindTitleScreen()?.ShowChoices(); _ucAt = now + 2; }
+        if (_ucStep == 1) { ShowTitleChoices(GameBridge.FindTitleScreen()); _ucAt = now + 2; }
         else if (_ucStep == 2) { UI.NativeMenus.OpenTitleMenu(); _ucAt = now + 2; }
-        else if (_ucStep == 3) { Plugin.Log.LogInfo("[test] choosing Check for updates"); UI.NativeMenus.ClickEntry("Check for updates"); _ucAt = now + 90; }
+        else if (_ucStep == 3) { UI.NativeMenus.ClickEntry("Options"); _ucAt = now + 1; _ucStep = 30; return; }
+        else if (_ucStep == 30) { Plugin.Log.LogInfo("[test] choosing Check for Updates"); UI.NativeMenus.ClickEntry("Check for Updates"); _ucAt = now + 15; _ucStep = 4; return; }
+        // With --sosonline-popupanswer the popup is answered by now: the Online page must have its cursor back.
+        else if (_ucStep == 4) { Plugin.Log.LogInfo($"[test] after the update popup: {UI.NativeMenus.TitleMenuState()}"); Shot("ui-after-update-popup"); UI.NativeMenus.TestPressBack(); _ucAt = now + 1; }
+        // B on the page (no popup): the cursor goes to Back, the page stays open.
+        else if (_ucStep == 5) { Plugin.Log.LogInfo($"[test] after B on the page: {UI.NativeMenus.TitleMenuState()}"); Shot("ui-after-page-back"); _ucAt = now + (TryArg("noquit", out _) ? 600 : 1); }
         else { Plugin.Log.LogInfo("[test] update check test done"); Application.Quit(); }
         _ucStep++;
     }
@@ -215,14 +224,14 @@ internal static class TestHarness
         switch (_tfStep)
         {
             case 0: if (!GameBridge.AtTitleScreen) return; _tfAt = now + 5; break;
-            case 1: GameBridge.FindTitleScreen()?.ShowChoices(); _tfAt = now + 2; break;
+            case 1: ShowTitleChoices(GameBridge.FindTitleScreen()); _tfAt = now + 2; break;
             case 2: Plugin.Log.LogInfo($"[test] title: {State()}"); UI.NativeMenus.OpenTitleMenu(); _tfAt = now + 2; break;
             // What the game does when it shows the title again (back from a game): only its own entries must remain.
-            case 3: Plugin.Log.LogInfo($"[test] online: {State()}"); GameBridge.FindTitleScreen()?.ShowChoices(); _tfAt = now + 2; break;
+            case 3: Plugin.Log.LogInfo($"[test] online: {State()}"); ShowTitleChoices(GameBridge.FindTitleScreen()); _tfAt = now + 2; break;
             case 4: Plugin.Log.LogInfo($"[test] title choices shown again with Online open: {State()}"); Shot("ui-title-back"); _tfAt = now + 1; break;
             case 5: UI.NativeMenus.OpenTitleMenu(); _tfAt = now + 2; break;
             case 6: Plugin.Log.LogInfo($"[test] online again: {State()}"); UI.NativeMenus.ClickEntry("Host"); _tfAt = now + 6; break;
-            case 7: Plugin.Log.LogInfo($"[test] hosting: {State()}"); UI.NativeMenus.ClickEntry("Start"); _tfAt = now + 2; break;
+            case 7: Plugin.Log.LogInfo($"[test] hosting: {State()}"); UI.NativeMenus.ClickEntry("Load Game"); _tfAt = now + 2; break;
             case 8: Plugin.Log.LogInfo($"[test] saves: {State()}"); UI.NativeMenus.ClickEntry(0); Plugin.Log.LogInfo($"[test] save chosen, same frame: {State()}"); _tfAt = now + 0.3; break;
             case 9: Plugin.Log.LogInfo($"[test] save chosen, 0.3 s: {State()}"); Shot("ui-start-chosen"); _tfAt = now + 8; break;
             default: Plugin.Log.LogInfo("[test] title flow test done"); Session.Instance.Leave(); Application.Quit(); _tfStep = 99; return;
@@ -235,15 +244,60 @@ internal static class TestHarness
     private static int _vsStep;
     private static double _vsAt;
 
+    /// <summary>
+    /// The title choices as after a real "Press Enter": the game's prompt hidden and the press recorded. Calling
+    /// ShowChoices alone left "Press Enter" drawn over the menu in screenshots.
+    /// </summary>
+    private static void ShowTitleChoices(TitleScreen title)
+    {
+        if (title == null) return;
+        title.startPressed = true;
+        var prompt = title.pressStartButton;
+        if (prompt != null) prompt.gameObject.SetActive(false);
+        title.ShowChoices();
+    }
+
     /// <summary>--sosonline-versionshot: the title choices, a screenshot (ui-version), quit. Never opens a save.</summary>
     private static void VersionShotTest()
     {
         double now = Time.realtimeSinceStartupAsDouble;
         if (_vsStep == 0) { if (!GameBridge.AtTitleScreen) return; _vsStep = 1; _vsAt = now + 5; return; }
         if (now < _vsAt) return;
-        if (_vsStep == 1) { GameBridge.FindTitleScreen()?.ShowChoices(); _vsAt = now + 2; }
+        if (_vsStep == 1) { ShowTitleChoices(GameBridge.FindTitleScreen()); _vsAt = now + 2; }
         else if (_vsStep == 2) { Plugin.Log.LogInfo($"[test] version line: {UI.VersionLabel.Text}"); Shot("ui-version"); _vsAt = now + 1; }
         else { Plugin.Log.LogInfo("[test] version shot done"); Application.Quit(); }
+        _vsStep++;
+    }
+
+    /// <summary>--sosonline-onlineshot: the title's Online page (not hosting), a screenshot (ui-online-page), quit.</summary>
+    private static void OnlineShotTest()
+    {
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (_vsStep == 0) { if (!GameBridge.AtTitleScreen) return; _vsStep = 1; _vsAt = now + 5; return; }
+        if (now < _vsAt) return;
+        // A screenshot is written at the end of the frame, so a click comes one step after its shot.
+        string State() => $"{UI.NativeMenus.TitleMenuState()}, status shown {UI.NativeMenus.StatusShown}";
+        switch (_vsStep)
+        {
+            case 1: ShowTitleChoices(GameBridge.FindTitleScreen()); _vsAt = now + 2; break;
+            case 2: UI.NativeMenus.OpenTitleMenu(); _vsAt = now + 2; break;
+            case 3: Shot("ui-online-page"); _vsAt = now + 1; break;
+            case 4: UI.NativeMenus.ClickEntry("Host"); _vsAt = now + 4; break;
+            case 5: Plugin.Log.LogInfo($"[test] hosting: {State()}"); Shot("ui-online-hosting"); _vsAt = now + 1; break;
+            case 6: UI.NativeMenus.ClickEntry("Options"); _vsAt = now + 2; break;
+            case 7: Plugin.Log.LogInfo($"[test] options: {State()}"); Shot("ui-online-options"); _vsAt = now + 1; break;
+            case 8: UI.NativeMenus.SelectEntryForTest("Open to Friends"); _vsAt = now + 1; break;
+            case 9: Plugin.Log.LogInfo($"[test] options, Open to Friends: {State()}"); Shot("ui-online-options-help"); _vsAt = now + 1; break;
+            case 10: UI.NativeMenus.ClickEntry("Back"); _vsAt = now + 1; break;
+            case 11: Plugin.Log.LogInfo($"[test] back: {State()}"); UI.NativeMenus.ClickEntry("Load Game"); _vsAt = now + 2; break;
+            case 12: Plugin.Log.LogInfo($"[test] saves: {State()}"); Shot("ui-online-saves"); _vsAt = now + 1; break;
+            case 13: UI.NativeMenus.ClickEntry("Back"); _vsAt = now + 1; break;
+            case 14: Plugin.Log.LogInfo($"[test] back: {State()}"); UI.NativeMenus.ShowLongPageForTest(6); _vsAt = now + 2; break;
+            case 15: Plugin.Log.LogInfo($"[test] long page: {State()}"); Shot("ui-online-long"); _vsAt = now + 1; break;
+            case 16: UI.NativeMenus.ClickEntry("Back"); _vsAt = now + 1; break;
+            case 17: Plugin.Log.LogInfo($"[test] back: {State()}"); Session.Instance.Leave(); _vsAt = now + 2; break;
+            default: Plugin.Log.LogInfo("[test] online page shot done"); Application.Quit(); break;
+        }
         _vsStep++;
     }
     private static double _ucAt;
@@ -309,6 +363,7 @@ internal static class TestHarness
         UI.NativeMenus.TestAnswerTick();
         if (Args.ContainsKey("updatecheck")) UpdateCheckTest();
         if (Args.ContainsKey("versionshot")) VersionShotTest();
+        if (Args.ContainsKey("onlineshot")) OnlineShotTest();
         if (Args.ContainsKey("titleflow")) TitleFlowTest();
         if (Args.Count == 0 || _autoDone) return;
         var session = Session.Instance;

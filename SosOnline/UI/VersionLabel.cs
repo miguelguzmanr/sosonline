@@ -20,13 +20,27 @@ internal static class VersionLabel
     private static TextMeshProUGUI _label;
     private static GameObject _source;
     private static float _next;
+
+    /// <summary>World Y of the top of the game's own version line (the bottom row with the copyright), or null.</summary>
+    public static float? GameLineTop()
+    {
+        try
+        {
+            if (!Alive(_source) || !_source.activeInHierarchy) return null;
+            var text = _source.GetComponent<TextMeshProUGUI>();
+            if (text == null) return null;
+            text.ForceMeshUpdate();
+            return text.transform.TransformPoint(new Vector3(0f, text.textBounds.max.y, 0f)).y;
+        }
+        catch { return null; }
+    }
     private static bool _missingLogged;
 
     public static string Text
     {
         get
         {
-            var current = SosOnline.Update.AutoUpdate.Display(SosOnline.Update.AutoUpdate.Current);
+            var current = SosOnline.Update.AutoUpdate.DisplayCurrent;
             return SosOnline.Update.AutoUpdate.Available != null
                 ? $"Online Co-op Version {current} (Update available)"
                 : $"Online Co-op Version {current}";

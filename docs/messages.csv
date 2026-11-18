@@ -1,36 +1,36 @@
 ﻿id,kind,where,text,current_text,chars,has_placeholders,est_chars_filled,limit,over_limit,file,line,review_notes
 1,toast,Notice at the top of the screen,Co-op ended. You may continue playing.,Co-op ended. You may continue playing.,38,,38,80,,SosOnline/Net/Session.cs,388,
 2,toast,Notice at the top of the screen,Co-op ended. Open to friends is now off.,Co-op ended. Open to friends is now off.,40,,40,80,,SosOnline/Net/Session.cs,411,
-3,toast,Notice at the top of the screen,Leave co-op before joining another game.,Leave co-op before joining another game.,40,,40,80,,SosOnline/Net/Session.cs,432,Applied the suggestion.
-4,toast,Notice at the top of the screen,Join a session first.,Join a session first.,21,,21,80,,SosOnline/Net/Session.cs,479,
-5,toast,Notice at the top of the screen,Your logs are already on their way.,Your logs are already on their way.,35,,35,80,,SosOnline/Net/Session.cs,480,
+3,toast,Notice at the top of the screen,Leave co-op before joining another game,Leave co-op before joining another game,39,,40,80,,SosOnline/Net/Session.cs,432,"Applied the suggestion. No final period (one sentence, 2026-11-17)."
+4,toast,Notice at the top of the screen,Join a session first,Join a session first,20,,21,80,,SosOnline/Net/Session.cs,479,"No final period (one sentence, 2026-11-17)."
+5,toast,Notice at the top of the screen,Your logs are already on their way,Your logs are already on their way,34,,35,80,,SosOnline/Net/Session.cs,480,"No final period (one sentence, 2026-11-17)."
 6,toast,Notice at the top of the screen,Packing your logs…,Packing your logs…,18,,18,80,,SosOnline/Net/Session.cs,481,
-7,toast,Notice at the top of the screen,No friends connected.,No friends connected.,21,,21,80,,SosOnline/Net/Session.cs,487,
-8,toast,Notice at the top of the screen,"Asked {string.Join("", "", _peers.Values.Select(p => p.Name))} for logs.","Asked {string.Join("", "", _peers.Values.Select(p => p.Name))} for logs.",16,yes,28,80,,SosOnline/Net/Session.cs,493,
+7,toast,Notice at the top of the screen,No friends connected,No friends connected,20,,21,80,,SosOnline/Net/Session.cs,487,"No final period (one sentence, 2026-11-17)."
+8,toast,Notice at the top of the screen,"Asked {string.Join("", "", _peers.Values.Select(p => p.Name))} for logs","Asked {string.Join("", "", _peers.Values.Select(p => p.Name))} for logs",69,yes,28,80,,SosOnline/Net/Session.cs,493,"No final period (one sentence, 2026-11-17)."
 9,toast,Notice at the top of the screen,"Sending logs to {SlotName[0] ?? ""the host""} ({Math.Max(1, zip.Length / 1024)} KB)…","Sending logs to {SlotName[0] ?? ""the host""} ({Math.Max(1, zip.Length / 1024)} KB)…",23,yes,47,80,,SosOnline/Net/Session.cs,516,
-10,toast,Notice at the top of the screen,{name} has a different version ({modVersion}).,{name} has a different version ({modVersion}).,28,yes,52,80,,SosOnline/Net/Session.cs,741,
-11,toast,Notice at the top of the screen,Received {peer.Name}'s logs (Open logs folder).,Received {peer.Name}'s logs (Open logs folder).,36,yes,48,80,,SosOnline/Net/Session.cs,805,
+10,toast,Notice at the top of the screen,{name} has a different version ({modVersion}),{name} has a different version ({modVersion}),45,yes,52,80,,SosOnline/Net/Session.cs,741,"No final period (one sentence, 2026-11-17)."
+11,toast,Notice at the top of the screen,Received {peer.Name}'s logs (Open logs folder),Received {peer.Name}'s logs (Open logs folder),46,yes,48,80,,SosOnline/Net/Session.cs,805,"No final period (one sentence, 2026-11-17)."
 12,toast,Notice at the top of the screen,{peer.Name} keeps going out of sync. Retrying in a minute.,{peer.Name} keeps going out of sync. Retrying in a minute.,47,yes,59,80,,SosOnline/Net/Session.cs,827,
 13,toast,Notice at the top of the screen,Queued in {SlotName[0] ?? Transport.Describe(HostId)}'s game. You'll join as soon as their game allows saving.,Queued in {SlotName[0] ?? Transport.Describe(HostId)}'s game. You'll join as soon as their game allows saving.,67,yes,79,80,,SosOnline/Net/Session.cs,853,
-14,toast,Notice at the top of the screen,Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1}.,Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1}.,20,yes,44,80,,SosOnline/Net/Session.cs,854,"'game' and 'P2', like rows 13 and 100."
+14,toast,Notice at the top of the screen,Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1},Joined {SlotName[0] ?? Transport.Describe(HostId)}'s game as P{LocalSlot + 1},77,yes,44,80,,SosOnline/Net/Session.cs,854,"'game' and 'P2', like rows 13 and 100. No final period (one sentence, 2026-11-17)."
 15,toast,Notice at the top of the screen,"{SlotName[0] ?? ""The host""} received your logs. Thanks!","{SlotName[0] ?? ""The host""} received your logs. Thanks!",28,yes,40,80,,SosOnline/Net/Session.cs,859,
-16,toast,Notice at the top of the screen,"{SlotName[0] ?? ""The host""} asks for your logs (check the Online menu).","{SlotName[0] ?? ""The host""} asks for your logs (check the Online menu).",44,yes,56,80,,SosOnline/Net/Session.cs,862,
+16,toast,Notice at the top of the screen,"{SlotName[0] ?? ""The host""} asks for your logs (check the Online menu)","{SlotName[0] ?? ""The host""} asks for your logs (check the Online menu)",70,yes,56,80,,SosOnline/Net/Session.cs,862,"No final period (one sentence, 2026-11-17)."
 17,toast,Notice at the top of the screen,You're in! Joining the party…,You're in! Joining the party…,29,,29,80,,SosOnline/Net/Session.cs,947,
 18,toast,Notice at the top of the screen,{peer.Name} {why}. The AI plays their character.,{peer.Name} {why}. The AI plays their character.,32,yes,56,80,,SosOnline/Net/Session.cs,1112,
 19,toast,Notice at the top of the screen,Joining…,Joining…,8,,8,80,,SosOnline/Net/Session.cs,1197,
 20,toast,Notice at the top of the screen,Co-op started. Joining the party…,Co-op started. Joining the party…,33,,33,80,,SosOnline/Net/Session.cs,1197,
-21,toast,Notice at the top of the screen,Co-op started.,Co-op started.,14,,14,80,,SosOnline/Net/Session.cs,1197,
+21,toast,Notice at the top of the screen,Co-op started,Co-op started,13,,14,80,,SosOnline/Net/Session.cs,1197,"No final period (one sentence, 2026-11-17)."
 22,toast,Notice at the top of the screen,Your game got out of sync. Re-syncing…,Your game got out of sync. Re-syncing…,38,,38,80,,SosOnline/Net/Session.cs,1359,
-23,toast,Notice at the top of the screen,{names} is joining.,{names} is joining.,12,yes,24,80,,SosOnline/Net/Session.cs,1590,
+23,toast,Notice at the top of the screen,{names} is joining,{names} is joining,18,yes,24,80,,SosOnline/Net/Session.cs,1590,"No final period (one sentence, 2026-11-17)."
 24,toast,Notice at the top of the screen,Everyone left. Friends can still join.,Everyone left. Friends can still join.,38,,38,80,,SosOnline/Net/Session.cs,1598,
-25,toast,Notice at the top of the screen,You left co-op but may continue playing.,You left co-op but may continue playing.,40,,40,80,,SosOnline/Net/Session.cs,1777,
+25,toast,Notice at the top of the screen,You left co-op but may continue playing,You left co-op but may continue playing,39,,40,80,,SosOnline/Net/Session.cs,1777,"No final period (one sentence, 2026-11-17)."
 26,toast,Notice at the top of the screen,Joining: {names}…,Joining: {names}…,10,yes,22,80,,SosOnline/Net/Session.cs,1864,
-27,toast,Notice at the top of the screen,"{string.Join("", "", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this.","{string.Join("", "", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this.",27,yes,39,80,,SosOnline/Net/Session.cs,2055,
-28,toast,Notice at the top of the screen,Press Join on your controller to play.,Press Join on your controller to play.,38,,38,80,,SosOnline/Net/Session.cs,2101,
-29,toast,Notice at the top of the screen,{peer.Name} is joining.,{peer.Name} is joining.,12,yes,24,80,,SosOnline/Net/Session.cs,2148,
-30,toast,Notice at the top of the screen,{peer.Name} joined.,{peer.Name} joined.,8,yes,20,80,,SosOnline/Net/Session.cs,2261,
-31,toast,Notice at the top of the screen,"Leave co-op first, then accept the invite.","Leave co-op first, then accept the invite.",42,,42,80,,SosOnline/Steam/SteamInvites.cs,50,Applied the suggestion.
-32,toast,Notice at the top of the screen,Open Options from your own pause screen.,Open Options from your own pause screen.,40,,40,80,,SosOnline/UI/NativeMenus.cs,589,
+27,toast,Notice at the top of the screen,"{string.Join("", "", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this","{string.Join("", "", _peers.Values.Where(p => slots.Contains(p.Slot)).Select(p => p.Name))} queued to join after this",115,yes,39,80,,SosOnline/Net/Session.cs,2055,"No final period (one sentence, 2026-11-17)."
+28,toast,Notice at the top of the screen,Press Join on your controller to play,Press Join on your controller to play,37,,38,80,,SosOnline/Net/Session.cs,2101,"No final period (one sentence, 2026-11-17)."
+29,toast,Notice at the top of the screen,{peer.Name} is joining,{peer.Name} is joining,22,yes,24,80,,SosOnline/Net/Session.cs,2148,"No final period (one sentence, 2026-11-17)."
+30,toast,Notice at the top of the screen,{peer.Name} joined,{peer.Name} joined,18,yes,20,80,,SosOnline/Net/Session.cs,2261,"No final period (one sentence, 2026-11-17)."
+31,toast,Notice at the top of the screen,"Leave co-op first, then accept the invite","Leave co-op first, then accept the invite",41,,42,80,,SosOnline/Steam/SteamInvites.cs,50,"Applied the suggestion. No final period (one sentence, 2026-11-17)."
+32,toast,Notice at the top of the screen,Open Options from your own pause screen,Open Options from your own pause screen,39,,40,80,,SosOnline/UI/NativeMenus.cs,589,"No final period (one sentence, 2026-11-17)."
 34,error,"Notice, and the Online menu's status line",Steam is not available: {reason},Steam is not available: {reason},24,yes,36,80,,SosOnline/Net/Session.cs,227,
 35,error,"Notice, and the Online menu's status line",Go to the Title screen first.,Go to the Title screen first.,29,,29,80,,SosOnline/Net/Session.cs,268,
 36,error,"Notice, and the Online menu's status line",Input system not ready yet.,Input system not ready yet.,27,,27,80,,SosOnline/Net/Session.cs,269,
@@ -65,22 +65,22 @@
 65,popup choice,Game-style popup (pause menu > Online),Leave,Leave,5,,5,25,,SosOnline/UI/NativeMenus.cs,651,"Guest's Online popup: status line above, so one word is enough."
 66,popup choice,"Game-style popup (pause menu > Online, guest)",Leave,Leave,5,,5,25,,SosOnline/UI/NativeMenus.cs,625,"Answers 'Leave co-op, P2?'."
 67,popup choice,Game-style popup (restart while in a session),Restart,Restart,7,,7,25,,SosOnline/UI/NativeMenus.cs,486,
-68,menu entry,Title screen > Online page,Host,Host,4,,4,,,SosOnline/UI/NativeMenus.cs,492,
-69,menu entry,Title screen > Online page,Join,Join,4,,4,,,SosOnline/UI/NativeMenus.cs,493,
-70,menu entry,Title screen > Online page,Cancel,Cancel,6,,6,,,SosOnline/UI/NativeMenus.cs,498,
-71,menu entry,Title screen > Online page,Start,Start,5,,5,,,SosOnline/UI/NativeMenus.cs,504,
-72,menu entry,Title screen > Online page,Invite friends,Invite friends,14,,14,,,SosOnline/UI/NativeMenus.cs,505,
-73,menu entry,Title screen > Online page,"Input delay: {(s.ConfiguredDelay == 0 ? ""auto"" : s.ConfiguredDelay.ToString())}","Input delay: {(s.ConfiguredDelay == 0 ? ""auto"" : s.ConfiguredDelay.ToString())}",13,yes,25,,,SosOnline/UI/NativeMenus.cs,506,
-74,menu entry,Title screen > Online page,Stop hosting,Stop hosting,12,,12,,,SosOnline/UI/NativeMenus.cs,507,Same as row 64.
-75,menu entry,Title screen > Online page,Leave co-op,Leave co-op,11,,11,,,SosOnline/UI/NativeMenus.cs,509,Also the pause screen's main entry (LocalPause.cs:189).
-76,menu entry,Title screen > Online page,Send logs to host,Send logs to host,17,,17,,,SosOnline/UI/NativeMenus.cs,512,Also on the local pause screen.
-77,menu entry,Title screen > Online page,Ask for logs,Ask for logs,12,,12,,,SosOnline/UI/NativeMenus.cs,513,Also on the local pause screen. Friends are the only ones to ask.
-78,menu entry,Title screen > Online page,"Open to friends: {(Settings.OpenToFriends ? ""on"" : ""off"")}","Open to friends: {(Settings.OpenToFriends ? ""on"" : ""off"")}",17,yes,29,,,SosOnline/UI/NativeMenus.cs,515,
-79,menu entry,Title screen > Online page,Open logs folder,Open logs folder,16,,16,,,SosOnline/UI/NativeMenus.cs,516,
-80,menu entry,Title screen > Online page,Back,Back,4,,4,,,SosOnline/UI/NativeMenus.cs,517,
-81,menu entry,Title screen > Online page,Refresh,Refresh,7,,7,,,SosOnline/UI/NativeMenus.cs,530,
-82,menu entry,Title screen > Online page,{delay} frames ({delay * 17} ms),{delay} frames ({delay * 17} ms),13,yes,37,,,SosOnline/UI/NativeMenus.cs,550,
-83,menu entry,Title screen > Online page,Auto,Auto,4,,4,,,SosOnline/UI/NativeMenus.cs,550,Matches 'Input delay: auto'.
+68,menu entry,Title screen > Online page,Host,Host,4,,4,,,SosOnline/UI/NativeMenus.cs,724,
+69,menu entry,Title screen > Online page,Join,Join,4,,4,,,SosOnline/UI/NativeMenus.cs,725,
+70,menu entry,Title screen > Online page,Cancel,Cancel,6,,6,,,SosOnline/UI/NativeMenus.cs,730,
+71,menu entry,Title screen > Online page,Load Game,Load Game,9,,9,,,SosOnline/UI/NativeMenus.cs,755,"Was ""Start"" (2026-11-18). Title Case (2026-11-18)."
+72,menu entry,Title screen > Online page,Invite Friends,Invite Friends,14,,14,,,SosOnline/UI/NativeMenus.cs,737,Title Case (2026-11-18).
+73,menu entry,Title screen > Online page > Options,"Input Delay: {(s.ConfiguredDelay == 0 ? ""Auto"" : s.ConfiguredDelay.ToString())}","Input Delay: {(s.ConfiguredDelay == 0 ? ""Auto"" : s.ConfiguredDelay.ToString())}",13,yes,17,,,SosOnline/UI/NativeMenus.cs,771,Moved to Options (2026-11-18). Title Case (2026-11-18).
+74,menu entry,Title screen > Online page,Stop Hosting,Stop Hosting,12,,12,,,SosOnline/UI/NativeMenus.cs,738,Same as row 64. Title Case (2026-11-18).
+75,menu entry,Title screen > Online page,Leave Co-op,Leave Co-op,11,,11,,,SosOnline/UI/NativeMenus.cs,740,Also the pause screen's main entry (LocalPause.cs:189). Title Case (2026-11-18).
+76,menu entry,Title screen > Online page > Options,Send Logs to Host,Send Logs to Host,17,,17,,,SosOnline/UI/NativeMenus.cs,778,Also on the local pause screen. Title Case (2026-11-18). Moved to Options (2026-11-18).
+77,menu entry,Title screen > Online page > Options,Ask for Logs,Ask for Logs,12,,12,,,SosOnline/UI/NativeMenus.cs,779,Also on the local pause screen. Friends are the only ones to ask. Title Case (2026-11-18). Moved to Options (2026-11-18).
+78,menu entry,Title screen > Online page > Options,"Open to Friends: {(Settings.OpenToFriends ? ""On"" : ""Off"")}","Open to Friends: {(Settings.OpenToFriends ? ""On"" : ""Off"")}",17,yes,20,,,SosOnline/UI/NativeMenus.cs,773,Moved to Options (2026-11-18). Title Case (2026-11-18).
+79,menu entry,Title screen > Online page > Options,Open Logs Folder,Open Logs Folder,16,,16,,,SosOnline/UI/NativeMenus.cs,780,Moved to Options (2026-11-18). Title Case (2026-11-18).
+80,menu entry,Title screen > Online page,Back,Back,4,,4,,,SosOnline/UI/NativeMenus.cs,23,B on the page puts the cursor here; B on Back goes back (2026-11-18).
+81,menu entry,Title screen > Online page,Refresh,Refresh,7,,7,,,SosOnline/UI/NativeMenus.cs,774,
+82,menu entry,Title screen > Online page,{delay} Frames ({delay * 17} ms),{delay} Frames ({delay * 17} ms),13,yes,17,,,SosOnline/UI/NativeMenus.cs,794,Title Case (2026-11-18).
+83,menu entry,Title screen > Online page,Auto,Auto,4,,4,,,SosOnline/UI/NativeMenus.cs,794,Matches 'Input Delay: Auto'.
 84,menu entry,Title screen and pause menu entry,Online,Online,6,,6,,,SosOnline/UI/NativeMenus.cs,38,
 85,status,Online menu status line (some are also shown as a notice),Hosting on UDP port {Transport.LocalId},Hosting on UDP port {Transport.LocalId},20,yes,32,,,SosOnline/Net/Session.cs,248,
 86,status,Online menu status line (some are also shown as a notice),Creating lobby…,Creating lobby…,15,,15,,,SosOnline/Net/Session.cs,254,
@@ -226,10 +226,10 @@
 226,error,Notice as 'Can't join: <reason>' (from the host),different game setup.,different game setup.,21,,21,80,,SosOnline/Net/Session.cs,714,Action-table hash: usually another mod or game version.
 227,error,Notice as 'Can't join: <reason>' (from the host),the game is starting. Try again in a moment.,the game is starting. Try again in a moment.,44,,44,80,,SosOnline/Net/Session.cs,715,
 228,error,Notice as 'Can't join: <reason>' (from the host),the game is full.,the game is full.,17,,17,80,,SosOnline/Net/Session.cs,717,
-229,menu entry,Title screen > Online page and pause menu Online popup,Restart to update ({current} -> {downloaded}),Restart to update ({current} -> {downloaded}),24,yes,48,,,SosOnline/Update/AutoUpdate.cs,88,Fine as is. Versions shown as 0.56 (2026-11-17).
+229,menu entry,Title screen > Online page and pause menu Online popup,Restart to Update ({current} -> {downloaded}),Restart to Update ({current} -> {downloaded}),24,yes,48,,,SosOnline/Update/AutoUpdate.cs,91,Fine as is. Versions shown as 0.56 (2026-11-17). Title Case (2026-11-18).
 230,status,Online menu status line,Ping {s.Peers.Max(p => p.rtt):F0} ms,Ping {s.Peers.Max(p => p.rtt):F0} ms,8,yes,20,,,SosOnline/UI/NativeMenus.cs,666,
-231,menu entry,Title screen > Online > Start (save list),Slot {i + 1} (autosave),Slot {i + 1} (autosave),16,yes,28,,,SosOnline/Game/GameBridge.cs,443,"Checked: the game's save screen numbers its slots 1-3 and shows the location and the save's date and time ('1  The Forbidden Cavern  11/15/2026 9:50 PM'); empty slots say 'No data'. Kept 'Slot N' as is, by choice."
-232,toast,Notice at the top of the screen,You're back in sync.,You're back in sync.,20,,20,80,,SosOnline/Net/Session.cs,981,New (2026-11-16): a guest that got out of sync rejoined by replaying while the others played on.
+231,menu entry,Title screen > Online > Load Game (save list),Slot {i + 1} (Autosave),Slot {i + 1} (Autosave),16,yes,28,,,SosOnline/Game/GameBridge.cs,468,"Checked: the game's save screen numbers its slots 1-3 and shows the location and the save's date and time ('1  The Forbidden Cavern  11/15/2026 9:50 PM'); empty slots say 'No data'. Kept 'Slot N' as is, by choice. Title Case (2026-11-18)."
+232,toast,Notice at the top of the screen,Welcome back!,Welcome back!,13,,20,80,,SosOnline/Net/Session.cs,981,"New (2026-11-16): a guest that got out of sync rejoined by replaying while the others played on. Was ""You're back in sync."" (user, 2026-11-17)."
 233,status,Online menu status line (some are also shown as a notice),Rejoining the party…,Rejoining the party…,20,,20,,,SosOnline/Net/Session.cs,2369,New (2026-11-16): instead of 'Catching up with the party…' when rejoining after getting out of sync.
 234,screen,Catch-up / re-sync screen (full screen),The others keep playing while you rejoin.,The others keep playing while you rejoin.,41,,41,,,SosOnline/UI/CatchUpScreen.cs,50,New (2026-11-16): footer while rejoining by replay. Title reuses row 128 (Rejoining {host}'s game).
 235,pause entry,"Local pause screen: host, where saving is not allowed, while a friend waits to join",Return to area start,Return to area start,20,,20,,,SosOnline/UI/LocalPause.cs,204,New (2026-11-16): the host's only choice besides Back there.
@@ -238,14 +238,14 @@
 238,pause hint,Local pause screen: confirm,Progress since entering this area will be lost.,Progress since entering this area will be lost.,47,,47,,,SosOnline/UI/LocalPause.cs,332,New (2026-11-16).
 239,pause entry,Local pause screen: confirm,Return,Return,6,,6,,,SosOnline/UI/LocalPause.cs,199,New (2026-11-16). Answers row above; Back returns to the page.
 240,toast,Notice at the top of the screen (host),Returning to the area start…,Returning to the area start…,28,,28,80,,SosOnline/Net/Session.cs,2050,New (2026-11-16).
-241,toast,Notice at the top of the screen (guests),The host is returning to the area start.,The host is returning to the area start.,40,,40,80,,SosOnline/Net/Session.cs,1068,New (2026-11-16).
+241,toast,Notice at the top of the screen (guests),The host is returning to the area start,The host is returning to the area start,39,,40,80,,SosOnline/Net/Session.cs,1068,"New (2026-11-16). No final period (one sentence, 2026-11-17)."
 242,toast,Notice at the top of the screen (host),The party left the area. Return cancelled.,The party left the area. Return cancelled.,42,,42,80,,SosOnline/Net/Session.cs,2060,New (2026-11-16).
-243,toast,Notice at the top of the screen (host),Couldn't return to the area start.,Couldn't return to the area start.,34,,34,80,,SosOnline/Net/Session.cs,2061,New (2026-11-16). Also when the area entry save is missing.
-244,toast,Notice at the top of the screen (host),Nobody is waiting to join.,Nobody is waiting to join.,26,,26,80,,SosOnline/Net/Session.cs,2017,New (2026-11-16).
+243,toast,Notice at the top of the screen (host),Couldn't return to the area start,Couldn't return to the area start,33,,34,80,,SosOnline/Net/Session.cs,2061,"New (2026-11-16). Also when the area entry save is missing. No final period (one sentence, 2026-11-17)."
+244,toast,Notice at the top of the screen (host),Nobody is waiting to join,Nobody is waiting to join,25,,26,80,,SosOnline/Net/Session.cs,2017,"New (2026-11-16). No final period (one sentence, 2026-11-17)."
 245,pause entry,"Local pause screen: host, where saving is not allowed, while a friend waits to join",Pause for everyone,Pause for everyone,18,,18,,,SosOnline/UI/LocalPause.cs,224,New (2026-11-16): same as row 122; not shown in battles (the game has no pause there).
-246,menu entry,Title screen > Online page,Check for updates,Check for updates,17,,17,,,SosOnline/Update/AutoUpdate.cs,52,New (2026-11-16).
-247,menu entry,Title screen > Online page (while checking),Checking for updates…,Checking for updates…,21,,21,,,SosOnline/Update/AutoUpdate.cs,55,New (2026-11-16).
-248,menu entry,Title screen > Online page (while downloading),Downloading the update…,Downloading the update…,23,,23,,,SosOnline/Update/AutoUpdate.cs,56,New (2026-11-16).
+246,menu entry,Title screen > Online page > Options,Check for Updates,Check for Updates,17,,17,,,SosOnline/Update/AutoUpdate.cs,54,New (2026-11-16). Moved to Options (2026-11-18). Title Case (2026-11-18).
+247,menu entry,Title screen > Online page > Options (while checking),Checking for Updates…,Checking for Updates…,21,,21,,,SosOnline/Update/AutoUpdate.cs,52,New (2026-11-16). Title Case (2026-11-18).
+248,menu entry,Title screen > Online page > Options (while downloading),Downloading the Update…,Downloading the Update…,23,,23,,,SosOnline/Update/AutoUpdate.cs,53,New (2026-11-16). Title Case (2026-11-18).
 249,popup,Popup after Check for updates,Up to date ({version}).,Up to date ({version}).,23,yes,23,,,SosOnline/Update/AutoUpdate.cs,168,New (2026-11-16).
 250,popup,Popup after Check for updates,Update {version} is available.,Update {version} is available.,30,yes,30,,,SosOnline/Update/AutoUpdate.cs,171,New (2026-11-16).
 251,popup,Popup after Check for updates (locally modified build),This is a local build. / Install the published {version}?,This is a local build. / Install the published {version}?,57,yes,57,,,SosOnline/Update/AutoUpdate.cs,171,New (2026-11-16).
@@ -253,7 +253,15 @@
 253,toast,Notice at the top of the screen,Downloading {version}…,Downloading {version}…,22,yes,22,80,,SosOnline/Update/AutoUpdate.cs,180,New (2026-11-16).
 254,popup,Popup after installing,Update {version} installed. Restart now?,Update {version} installed. Restart now?,40,yes,40,,,SosOnline/Update/AutoUpdate.cs,191,New (2026-11-16).
 255,popup choice,Popup after installing,Later,Later,5,,5,,,SosOnline/Update/AutoUpdate.cs,191,New (2026-11-16).
-256,toast,Notice at the top of the screen,Couldn't check for updates.,Couldn't check for updates.,27,,27,80,,SosOnline/Update/AutoUpdate.cs,159,New (2026-11-16).
-257,toast,Notice at the top of the screen,Couldn't install the update.,Couldn't install the update.,28,,28,80,,SosOnline/Update/AutoUpdate.cs,190,New (2026-11-16).
-258,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version},Online Co-op Version {version},30,yes,25,,,SosOnline/UI/VersionLabel.cs,32,New (2026-11-17). Wording from the user.
-259,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version} (Update available),Online Co-op Version {version} (Update available),49,yes,44,,,SosOnline/UI/VersionLabel.cs,31,New (2026-11-17). Wording from the user.
+256,toast,Notice at the top of the screen,Couldn't check for updates,Couldn't check for updates,26,,27,80,,SosOnline/Update/AutoUpdate.cs,159,"New (2026-11-16). No final period (one sentence, 2026-11-17)."
+257,toast,Notice at the top of the screen,Couldn't install the update,Couldn't install the update,27,,28,80,,SosOnline/Update/AutoUpdate.cs,190,"New (2026-11-16). No final period (one sentence, 2026-11-17)."
+258,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version},Online Co-op Version {version},30,yes,25,,,SosOnline/UI/VersionLabel.cs,32,New (2026-11-17). Wording from the user. {version} ends in -modified on a local build (2026-11-18).
+259,label,"Title screen, bottom-left (mirrors the game's version line)",Online Co-op Version {version} (Update available),Online Co-op Version {version} (Update available),49,yes,44,,,SosOnline/UI/VersionLabel.cs,31,New (2026-11-17). Wording from the user. {version} ends in -modified on a local build (2026-11-18).
+260,menu entry,Title screen > Online page,Options,Options,7,,7,,,SosOnline/UI/NativeMenus.cs,762,"New (2026-11-18): Input Delay, Open to Friends, Check for Updates, Send Logs to Host / Ask for Logs and Open Logs Folder moved here so the page stays clear of the copyright."
+261,status,"Title screen > Online > Options status lines, cursor on Input Delay",Frames each press waits so every PC stays in step. / Auto adapts it to the ping.,Frames each press waits so every PC stays in step. / Auto adapts it to the ping.,80,,80,,,SosOnline/UI/NativeMenus.cs,938,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 50 chars."
+262,status,"Title screen > Online > Options status lines, cursor on Open to Friends","Keep a Steam lobby open while you play, / so friends can drop into your game","Keep a Steam lobby open while you play, / so friends can drop into your game",76,,76,,,SosOnline/UI/NativeMenus.cs,939,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 39 chars."
+263,status,"Title screen > Online > Options status lines, cursor on Check for Updates",Look for a newer version of the mod,Look for a newer version of the mod,35,,35,,,SosOnline/UI/NativeMenus.cs,940,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 35 chars."
+264,status,"Title screen > Online > Options status lines, cursor on Send Logs to Host","Send your recent logs to the host, / to help find a problem","Send your recent logs to the host, / to help find a problem",59,,59,,,SosOnline/UI/NativeMenus.cs,942,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 34 chars."
+265,status,"Title screen > Online > Options status lines, cursor on Ask for Logs",Ask friends to send you their logs,Ask friends to send you their logs,34,,34,,,SosOnline/UI/NativeMenus.cs,943,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 34 chars."
+266,status,"Title screen > Online > Options status lines, cursor on Open Logs Folder",Open the folder with this PC's logs,Open the folder with this PC's logs,35,,35,,,SosOnline/UI/NativeMenus.cs,944,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 35 chars."
+267,status,"Title screen > Online > Options status lines, cursor on Back",Back to the Online menu,Back to the Online menu,23,,23,,,SosOnline/UI/NativeMenus.cs,945,"New (2026-11-18): describes the highlighted entry. "" / "" is a line break; longest line 23 chars."

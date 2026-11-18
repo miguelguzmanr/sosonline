@@ -40,6 +40,10 @@ internal static class NativeMenus
     // ================================================================== popups (two choices max)
 
     private static (GenericPopupScreen screen, int index, string label, float at)? _testAnswer;
+    private static float _testBack;
+
+    /// <summary>Test harness: acts as if UI_Back was pressed on the next frame (--sosonline-pageback, popupanswer=B).</summary>
+    internal static void TestPressBack() => _fakeBackFrame = Time.frameCount + 1;
 
     /// <summary>Test harness (--sosonline-popupanswer=Label,...): answer a popup offering one of these, a moment after it opens.</summary>
     private static void TestAnswer(GenericPopupScreen screen, string[] labels)
@@ -47,6 +51,7 @@ internal static class NativeMenus
         if (!TestHarness.TryArg("popupanswer", out var list)) return;
         foreach (var want in list.Split(',', StringSplitOptions.RemoveEmptyEntries))
         {
+            if (want == "B") { _testBack = UnityEngine.Time.realtimeSinceStartup + 1.5f; return; }
             int i = Array.IndexOf(labels, want.Replace('_', ' '));
             if (i >= 0) { _testAnswer = (screen, i, labels[i], UnityEngine.Time.realtimeSinceStartup + 1.5f); return; }
         }
@@ -55,14 +60,23 @@ internal static class NativeMenus
     /// <summary>Test harness, every frame.</summary>
     internal static void TestAnswerTick()
     {
+        if (_testBack > 0 && UnityEngine.Time.realtimeSinceStartup >= _testBack)
+        {
+            _testBack = 0;
+            Plugin.Log.LogInfo("[test] popup: pressing Back");
+            _fakeBackFrame = Time.frameCount + 1;
+        }
         if (_testAnswer is not { } a || UnityEngine.Time.realtimeSinceStartup < a.at) return;
         _testAnswer = null;
         try
         {
             Plugin.Log.LogInfo($"[test] popup: choosing '{a.label}'");
             // The answer is the cursor's index, not just the selected button's.
+            var button = a.screen.buttons[a.index];
+            EventSystem.current?.SetSelectedGameObject(button.gameObject);
+            a.screen.SelectButton(button);
             a.screen.cursorIndex = a.index;
-            a.screen.SelectButton(a.screen.buttons[a.index]);
+            Plugin.Log.LogInfo($"[test] popup: cursor {a.screen.cursorIndex}, selected {EventSystem.current?.currentSelectedGameObject?.name}");
             a.screen.OnChoiceDone();
         }
         catch (Exception e) { Plugin.Log.LogWarning($"[test] popup answer failed: {e.Message}"); }
@@ -70,6 +84,50 @@ internal static class NativeMenus
 
     private static bool _popupOpen;
     private static int _popupToken;
+
+    // The cursor before a popup opened, given back once it closes. Our title entries aren't part of a game view, so
+    // nothing else restores them: after Back on "This is a local build…" the Online page had no selection and no
+    // longer answered the pad or keyboard (2026-11-17).
+    private static GameObject _selectedBeforePopup;
+    private static int _popupClosedFrame = -100;
+    private static bool _restorePending;
+    private static GenericPopupScreen _openPopup;
+    private static int _popupOpenedFrame;
+    private static int _fakeBackFrame = -1;
+
+    /// <summary>
+    /// Every frame: B (UI_Back) on one of our popups chooses its last choice (Back, Later, OK). The game's own handling
+    /// (resetOnBackInput) only moves the popup's cursor, and with our entries behind it the selection then went to the
+    /// title menu: the popup stayed open, unanswered, and blocked every popup after it (2026-11-18).
+    /// </summary>
+    private static void PopupBackTick()
+    {
+        if (!_popupOpen || _openPopup == null || Time.frameCount - _popupOpenedFrame < 2) return;
+        if (!BackPressed() && Time.frameCount != _fakeBackFrame) return;
+        var screen = _openPopup;
+        try
+        {
+            if (!Alive(screen) || !screen.gameObject.activeInHierarchy)
+            {
+                // Closed without an answer: don't keep blocking the next popup.
+                Plugin.Log.LogWarning("[menu] popup closed without an answer");
+                _popupOpen = false;
+                _openPopup = null;
+                _popupClosedFrame = Time.frameCount;
+                _restorePending = true;
+                return;
+            }
+            int last = screen.buttons.Count - 1;
+            if (last < 0) return;
+            Plugin.Log.LogInfo("[menu] popup: Back pressed, choosing the last choice");
+            var button = screen.buttons[last];
+            EventSystem.current?.SetSelectedGameObject(button.gameObject);
+            screen.SelectButton(button);
+            screen.cursorIndex = last;
+            screen.OnChoiceDone();
+        }
+        catch (Exception e) { Plugin.Log.LogWarning($"[menu] popup Back failed: {e.Message}"); }
+    }
 
     /// <summary>
     /// The game's generic popup: a message, up to two choices; onAnswer(index), -1 for cancel. False when it can't
@@ -89,11 +147,12 @@ internal static class NativeMenus
             var choiceLabels = no != null ? new[] { yes, no } : new[] { yes };
             Plugin.Log.LogInfo($"[menu] popup '{message.Replace("\n", " / ")}': {string.Join(" | ", choiceLabels)}");
             _popupOpen = true;
+            try { _selectedBeforePopup = EventSystem.current?.currentSelectedGameObject; } catch { _selectedBeforePopup = null; }
             int token = ++_popupToken;
             Action<View> done = view =>
             {
                 var screen = view?.TryCast<GenericPopupScreen>();
-                if (screen == null) { if (token == _popupToken) _popupOpen = false; return; }
+                if (screen == null) { if (token == _popupToken) { _popupOpen = false; _restorePending = true; } return; }
                 bool handled = false;
                 Action<GenericPopupScreen, bool, int> answered = (_, success, index) =>
                 {
@@ -103,12 +162,17 @@ internal static class NativeMenus
                     if (handled || token != _popupToken || !_popupOpen) return;
                     handled = true;
                     _popupOpen = false;
+                    _openPopup = null;
+                    _popupClosedFrame = Time.frameCount;
+                    _restorePending = true;
                     try { screen.onPopupAnswered = null; } catch { }
                     Plugin.Log.LogInfo($"[menu] popup answered: {(success ? index.ToString() : "cancelled")}");
                     try { onAnswer?.Invoke(success ? index : -1); }
                     catch (Exception e) { Plugin.Log.LogError($"[menu] {e}"); }
                 };
                 screen.onPopupAnswered = answered;
+                _openPopup = screen;
+                _popupOpenedFrame = Time.frameCount;
                 FitButtons(screen);
                 TestAnswer(screen, choiceLabels);
             };
@@ -181,6 +245,29 @@ internal static class NativeMenus
         catch (Exception e) { Plugin.Log.LogWarning($"[menu] popup buttons not resized: {e.Message}"); }
     }
 
+    /// <summary>
+    /// Every frame: after a popup closed (and no other one opened from its answer), put the cursor back where it was,
+    /// or on the Online page's first entry, once the popup has let go of the selection.
+    /// </summary>
+    private static void RestoreAfterPopup()
+    {
+        if (!_restorePending || _popupOpen || Time.frameCount - _popupClosedFrame < 2) return;
+        _restorePending = false;
+        try
+        {
+            var current = EventSystem.current?.currentSelectedGameObject;
+            // The answer moved the cursor to one of our entries itself (a new page): keep it. Anything else (the title
+            // screen's own buttons, the popup's) isn't where the player was.
+            if (current != null && current.activeInHierarchy && _entries.Any(b => b != null && Alive(b) && b.gameObject == current))
+                if (current != _selectedBeforePopup) { Plugin.Log.LogInfo($"[menu] cursor after popup: {current.name} (kept)"); return; }
+            var before = _selectedBeforePopup;
+            if (before != null && Alive(before) && before.activeInHierarchy) { Select(before.GetComponent<Selectable>()); Plugin.Log.LogInfo($"[menu] cursor after popup: {before.name} (restored)"); return; }
+            if (SubmenuOpen) { var first = _entries.FirstOrDefault(b => b != null && Alive(b) && b.gameObject.activeSelf); if (first != null) { Select(first); Plugin.Log.LogInfo($"[menu] cursor after popup: {first.name} (first entry)"); } }
+        }
+        catch (Exception e) { Plugin.Log.LogWarning($"[menu] cursor not restored after a popup: {e.Message}"); }
+        finally { _selectedBeforePopup = null; }
+    }
+
     private static void Confirm(string message, string yes, Action onYes, string no = "Back", Action onNo = null) =>
         _ = Popup(message, yes, no, i => { if (i == 0) onYes?.Invoke(); else onNo?.Invoke(); });
 
@@ -192,6 +279,11 @@ internal static class NativeMenus
     private static TextMeshProUGUI _status;
     private static Func<IEnumerable<(string label, Action action)>> _currentPage;
     private static Phase _pagePhase;
+    private static string _pageUpdateState;
+
+    /// <summary>What the main page's update entries depend on, to rebuild it when they change.</summary>
+    private static string UpdateState() =>
+        $"{SosOnline.Update.AutoUpdate.CheckLabel}|{SosOnline.Update.AutoUpdate.RestartLabel}|{SosOnline.Update.AutoUpdate.Downloaded}";
     private static int _pagePeers;
     private static float _nextStatusRefresh;
     public static bool SubmenuOpen { get; private set; }
@@ -311,6 +403,13 @@ internal static class NativeMenus
 
     internal static void OpenTitleMenu() => ShowPage(MainPage);
 
+    /// <summary>Test harness: a page of n entries plus Back (a long save list), to check the status stays off the copyright.</summary>
+    internal static void ShowLongPageForTest(int n) => ShowPage(() =>
+        Enumerable.Range(1, n).Select(i => ($"Slot {i}", (Action)(() => { }))).Append(("Back", () => ShowPage(MainPage))));
+
+    /// <summary>Test harness: whether the status lines are drawn.</summary>
+    internal static bool StatusShown => _status != null && _status.gameObject.activeInHierarchy && _status.alpha > 0f;
+
     /// <summary>Test harness: the title list's visible buttons, in order, and what is selected.</summary>
     internal static string TitleMenuState()
     {
@@ -336,13 +435,23 @@ internal static class NativeMenus
     /// <summary>Test harness: press the visible entry with this label.</summary>
     internal static void ClickEntry(string label) => ClickEntry(_labels.FindIndex(l => l == label));
 
+    /// <summary>Test harness: put the cursor on an entry (its label before any ": value").</summary>
+    internal static void SelectEntryForTest(string key)
+    {
+        int i = _labels.FindIndex(l => EntryKey(l) == key);
+        if (i >= 0 && i < _entries.Count) Select(_entries[i]);
+    }
+
     /// <summary>Test harness: press the n-th visible entry.</summary>
     internal static void ClickEntry(int index)
     {
-        if (index >= 0 && index < _entries.Count && _entries[index].gameObject.activeSelf) _entries[index].onClick.Invoke();
+        // Selected first, as a player's cursor would be.
+        if (index >= 0 && index < _entries.Count && _entries[index].gameObject.activeSelf) { Select(_entries[index]); _entries[index].onClick.Invoke(); }
     }
 
-    private static void ShowPage(Func<IEnumerable<(string label, Action action)>> page)
+    /// <param name="select">The entry to put the cursor on (its label before any ": value"); else the same entry as
+    /// before when rebuilding the page that is showing, else the first.</param>
+    private static void ShowPage(Func<IEnumerable<(string label, Action action)>> page, string select = null)
     {
         if (_title == null) return;
         try
@@ -369,9 +478,11 @@ internal static class NativeMenus
 
             // Rebuilding the page that is showing (a toggle, a player joining): keep the cursor on the same entry.
             string keep = page == _currentPage ? SelectedEntryKey() : null;
+            int keepIndex = keep == null ? -1 : _labels.FindIndex(l => EntryKey(l) == keep);
             _currentPage = page;
             _pagePhase = Session.Instance.Phase;
             _pagePeers = Session.Instance.Peers.Count();
+            _pageUpdateState = UpdateState();
             var items = page().ToList();
 
             // Reuse entry buttons; create more as needed.
@@ -409,6 +520,9 @@ internal static class NativeMenus
             _labels.AddRange(items.Select(it => it.label));
             UpdateStatus(container);
             int at = keep == null ? -1 : _labels.FindIndex(l => EntryKey(l) == keep);
+            // An entry whose label changed ("Check for Updates" → "Checking for Updates…") keeps the cursor by position.
+            if (at < 0 && keepIndex >= 0) at = Math.Min(keepIndex, items.Count - 1);
+            if (select != null) { int wanted = _labels.FindIndex(l => EntryKey(l) == select); if (wanted >= 0) at = wanted; }
             Select(_entries[Math.Max(at, 0)]);
         }
         catch (Exception e)
@@ -420,7 +534,7 @@ internal static class NativeMenus
 
     private static readonly List<string> _labels = new();
 
-    /// <summary>An entry's label without its current value ("Open to friends: on" → "Open to friends").</summary>
+    /// <summary>An entry's label without its current value ("Open to Friends: On" → "Open to Friends").</summary>
     private static string EntryKey(string label)
     {
         int colon = label.IndexOf(':');
@@ -532,7 +646,7 @@ internal static class NativeMenus
             rt.anchoredPosition = crt.anchoredPosition - new Vector2(0f, crt.rect.height * crt.pivot.y + 12f);
         }
         SetActive(_status.gameObject, true);
-        _status.text = StatusText(Session.Instance);
+        _status.text = PageStatus(Session.Instance);
         PlaceStatus();
     }
 
@@ -552,11 +666,22 @@ internal static class NativeMenus
         var p = _status.transform.position;
         _status.transform.position = new Vector3(centerX, bottom, p.z);
         _status.rectTransform.anchoredPosition -= new Vector2(0f, 6f);
+        // A long page (many saves or friends) would push it onto the copyright row: hide it there instead.
+        try
+        {
+            float? floor = VersionLabel.GameLineTop();
+            _status.ForceMeshUpdate();
+            float statusBottom = _status.transform.TransformPoint(new Vector3(0f, _status.textBounds.min.y, 0f)).y;
+            _status.alpha = floor is { } f && statusBottom < f ? 0f : 1f;
+        }
+        catch { _status.alpha = 1f; }
     }
 
     /// <summary>Keeps the submenu current while it is open (players joining, connection progress…).</summary>
     public static void Update()
     {
+        PopupBackTick();
+        RestoreAfterPopup();
         if (!SubmenuOpen || _title == null) return;
         if (!GameBridge.AtTitleScreen) { _starting = false; CloseSubmenu(false); return; }
         if (_starting)
@@ -569,10 +694,20 @@ internal static class NativeMenus
             ShowPage(MainPage);
             return;
         }
-        if (!_popupOpen && BackPressed())
+        // The Back that answered a popup must not also close the page (it can still read as pressed this frame).
+        if (!_popupOpen && Time.frameCount - _popupClosedFrame > 2 && (BackPressed() || Time.frameCount == _fakeBackFrame))
         {
-            // Same as the page's own Back entry: a sub-page goes back to the main page, the main page closes.
-            if (_currentPage == MainPage) CloseSubmenu(true);
+            // B puts the cursor on the page's Back entry; B on Back does what Back does (a sub-page goes back to the
+            // main page, the main page closes).
+            int back = _labels.FindLastIndex(l => l == "Back");
+            var selected = EventSystem.current?.currentSelectedGameObject;
+            if (back >= 0 && back < _entries.Count && _entries[back] != null && _entries[back].gameObject != selected)
+            {
+                Select(_entries[back]);
+                return;
+            }
+            if (back >= 0 && back < _entries.Count && _entries[back] != null) _entries[back].onClick.Invoke();
+            else if (_currentPage == MainPage) CloseSubmenu(true);
             else ShowPage(MainPage);
             return;
         }
@@ -583,10 +718,20 @@ internal static class NativeMenus
             ShowPage(MainPage);
             return;
         }
-        if (Time.unscaledTime >= _nextStatusRefresh)
+        if ((_currentPage == MainPage || _currentPage == OptionsPage) && !_popupOpen && !_restorePending && UpdateState() != _pageUpdateState)
+        {
+            // The update entries changed (a check finished, a download is ready): "Checking for updates…" stayed on
+            // the page after its answer was shown (2026-11-18).
+            ShowPage(_currentPage);
+            return;
+        }
+        // The Options page describes the highlighted entry: refresh as soon as the cursor moves.
+        string selectedKey = _currentPage == OptionsPage ? SelectedEntryKey() : null;
+        if (Time.unscaledTime >= _nextStatusRefresh || selectedKey != _statusKey)
         {
             _nextStatusRefresh = Time.unscaledTime + 0.5f;
-            if (_status != null) { _status.text = StatusText(s); PlaceStatus(); }
+            _statusKey = selectedKey;
+            if (_status != null) { _status.text = PageStatus(s); PlaceStatus(); }
         }
     }
 
@@ -617,23 +762,33 @@ internal static class NativeMenus
             case Phase.AwaitingReady:
                 if (s.IsHost)
                 {
-                    if (s.Phase == Phase.Lobby) yield return ("Start", () => ShowPage(SavesPage));
-                    if (!s.UsingUdp) yield return ("Invite friends", () => s.InviteFriends());
-                    yield return ($"Input delay: {(s.ConfiguredDelay == 0 ? "auto" : s.ConfiguredDelay.ToString())}", () => ShowPage(DelayPage));
-                    yield return ("Stop hosting", () => s.Leave());
+                    if (s.Phase == Phase.Lobby) yield return ("Load Game", () => ShowPage(SavesPage));
+                    if (!s.UsingUdp) yield return ("Invite Friends", () => s.InviteFriends());
+                    yield return ("Stop Hosting", () => s.Leave());
                 }
-                else yield return ("Leave co-op", () => s.Leave());
+                else yield return ("Leave Co-op", () => s.Leave());
                 break;
         }
-        if (s.InSession && !s.IsHost) yield return ("Send logs to host", () => s.SendLogsToHost());
-        else if (s.IsHost && s.Peers.Any()) yield return ("Ask for logs", () => s.AskForLogs());
+        yield return ("Options", () => ShowPage(OptionsPage));
+        yield return ("Back", () => CloseSubmenu(true));
+    }
+
+    /// <summary>Settings and tools, off the main page so the list and its status lines stay clear of the copyright.</summary>
+    private static IEnumerable<(string, Action)> OptionsPage()
+    {
+        var s = Session.Instance;
+        if (s.IsHost && (s.Phase == Phase.Lobby || s.Phase == Phase.AwaitingReady))
+            yield return ($"Input Delay: {(s.ConfiguredDelay == 0 ? "Auto" : s.ConfiguredDelay.ToString())}", () => ShowPage(DelayPage));
         if (!s.InSession || s.IsHost)
-            yield return ($"Open to friends: {(Settings.OpenToFriends ? "on" : "off")}", () => { Settings.OpenToFriends = !Settings.OpenToFriends; ShowPage(MainPage); });
+            yield return ($"Open to Friends: {(Settings.OpenToFriends ? "On" : "Off")}", () => { Settings.OpenToFriends = !Settings.OpenToFriends; ShowPage(OptionsPage); });
         // Per PC: only outside a run (the in-session pause popup runs on every PC and may only offer the same choices).
         if (s.Phase != Phase.Running && SosOnline.Update.AutoUpdate.Downloaded == null)
-            yield return (SosOnline.Update.AutoUpdate.CheckLabel, () => { SosOnline.Update.AutoUpdate.CheckNow(); ShowPage(MainPage); });
-        yield return ("Open logs folder", SessionLogs.OpenFolder);
-        yield return ("Back", () => CloseSubmenu(true));
+            yield return (SosOnline.Update.AutoUpdate.CheckLabel, () => { SosOnline.Update.AutoUpdate.CheckNow(); ShowPage(OptionsPage); });
+        // Here rather than on the main page, which then never reaches the copyright (the pause screen has them too).
+        if (s.InSession && !s.IsHost) yield return ("Send Logs to Host", () => s.SendLogsToHost());
+        else if (s.IsHost && s.Peers.Any()) yield return ("Ask for Logs", () => s.AskForLogs());
+        yield return ("Open Logs Folder", SessionLogs.OpenFolder);
+        yield return ("Back", () => ShowPage(MainPage, "Options"));
     }
 
     private static List<(ulong id, string name, ulong lobby)> _friendsCache = new();
@@ -647,7 +802,7 @@ internal static class NativeMenus
             yield return (friend.name, () => Session.Instance.JoinFriend(friend.id));
         }
         yield return ("Refresh", () => ShowPage(FriendsPage));
-        yield return ("Back", () => ShowPage(MainPage));
+        yield return ("Back", () => ShowPage(MainPage, "Join"));
     }
 
     private static IEnumerable<(string, Action)> SavesPage()
@@ -657,7 +812,7 @@ internal static class NativeMenus
             var sl = slot;
             yield return (sl.label, () => { HideForStart(); Session.Instance.StartFromSave(sl.index, sl.auto); });
         }
-        yield return ("Back", () => ShowPage(MainPage));
+        yield return ("Back", () => ShowPage(MainPage, "Load Game"));
     }
 
     private static IEnumerable<(string, Action)> DelayPage()
@@ -666,9 +821,9 @@ internal static class NativeMenus
         foreach (int d in new[] { 0, 3, 5, 8 })
         {
             int delay = d;
-            yield return (delay == 0 ? "Auto" : $"{delay} frames ({delay * 17} ms)", () => { s.ConfiguredDelay = delay; ShowPage(MainPage); });
+            yield return (delay == 0 ? "Auto" : $"{delay} Frames ({delay * 17} ms)", () => { s.ConfiguredDelay = delay; ShowPage(OptionsPage, "Input Delay"); });
         }
-        yield return ("Back", () => ShowPage(MainPage));
+        yield return ("Back", () => ShowPage(OptionsPage, "Input Delay"));
     }
 
     // ================================================================== pause menu
@@ -705,7 +860,7 @@ internal static class NativeMenus
             if (slot <= 0) return true;
             Plugin.Log.LogInfo($"[menu] f{Session.Instance.Engine.AppliedFrame} Options from the shared pause blocked for P{slot + 1}");
             if (slot == Session.Instance.LocalSlot)
-                Toast.Show("Open Options from your own pause screen.");
+                Toast.Show("Open Options from your own pause screen");
             return false;
         }
     }
@@ -774,6 +929,28 @@ internal static class NativeMenus
 
     private static string PlayersLine(Session s) => string.Join("    ",
         Enumerable.Range(0, InputOverride.SlotCount).Where(i => !string.IsNullOrEmpty(s.SlotName[i])).Select(i => $"P{i + 1} {s.SlotName[i]}"));
+
+    private static string _statusKey;
+
+    /// <summary>What the Options page's entries do, shown under the list for the highlighted one.</summary>
+    private static readonly Dictionary<string, string> OptionsHelp = new()
+    {
+        ["Input Delay"] = "Frames each press waits so every PC stays in step.\nAuto adapts it to the ping.",
+        ["Open to Friends"] = "Keep a Steam lobby open while you play,\nso friends can drop into your game",
+        ["Check for Updates"] = "Look for a newer version of the mod",
+        ["Checking for Updates…"] = "Look for a newer version of the mod",
+        ["Send Logs to Host"] = "Send your recent logs to the host,\nto help find a problem",
+        ["Ask for Logs"] = "Ask friends to send you their logs",
+        ["Open Logs Folder"] = "Open the folder with this PC's logs",
+        ["Back"] = "Back to the Online menu",
+    };
+
+    /// <summary>The status lines for the page showing: on Options, what the highlighted entry does.</summary>
+    private static string PageStatus(Session s)
+    {
+        if (_currentPage == OptionsPage && SelectedEntryKey() is { } key && OptionsHelp.TryGetValue(key, out var help)) return help;
+        return StatusText(s);
+    }
 
     private static string StatusText(Session s)
     {

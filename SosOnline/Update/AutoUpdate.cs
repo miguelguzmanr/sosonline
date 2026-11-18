@@ -49,9 +49,9 @@ internal static class AutoUpdate
     /// <summary>The Online page's entry: "Check for updates", or what it's doing.</summary>
     public static string CheckLabel => _manual switch
     {
-        Manual.Checking => "Checking for updates…",
-        Manual.Downloading => "Downloading the update…",
-        _ => "Check for updates",
+        Manual.Checking => "Checking for Updates…",
+        Manual.Downloading => "Downloading the Update…",
+        _ => "Check for Updates",
     };
 
     private static bool LocalBuild => SessionLogs.Build.Contains("-modified");
@@ -85,7 +85,10 @@ internal static class AutoUpdate
     internal static void FakeAvailable(Version v) => _available = v;
 
     /// <summary>"Restart to update (0.39 -> 0.45)", for the Online menus (the game's menu font has no "→").</summary>
-    public static string RestartLabel => _downloaded == null ? null : $"Restart to update ({Display(Current)} -> {Display(_downloaded)})";
+    /// <summary>This build as players see it: "0.58", or "0.58-modified" for a locally modified build.</summary>
+    public static string DisplayCurrent => Display(Current) + (LocalBuild ? "-modified" : "");
+
+    public static string RestartLabel => _downloaded == null ? null : $"Restart to Update ({DisplayCurrent} -> {Display(_downloaded)})";
 
     /// <summary>
     /// Quits the game and starts it again through Steam, so the downloaded build runs. A hidden PowerShell waits for
@@ -160,7 +163,7 @@ internal static class AutoUpdate
         if (release == null)
         {
             Plugin.Log.LogWarning($"[update] check failed: {error ?? "no release found"}");
-            Toast.Show("Couldn't check for updates.");
+            Toast.Show("Couldn't check for updates");
             return;
         }
         var current = Current;
@@ -170,7 +173,7 @@ internal static class AutoUpdate
         Plugin.Log.LogInfo($"[update] latest release {release.Tag}; this build {SessionLogs.Build}{(newer ? ": newer" : LocalBuild ? ": local build" : ": up to date")}");
         if (!newer && !LocalBuild)
         {
-            Ask($"Up to date ({Display(current)}).", "OK", null, null);
+            Ask($"Up to date ({DisplayCurrent}).", "OK", null, null);
             return;
         }
         string question = newer ? $"Update {v} is available." : $"This is a local build.\nInstall the published {v}?";
@@ -192,7 +195,7 @@ internal static class AutoUpdate
             MainThread.Enqueue(() =>
             {
                 _manual = Manual.Idle;
-                if (!done) { Toast.Show("Couldn't install the update."); return; }
+                if (!done) { Toast.Show("Couldn't install the update"); return; }
                 Ask($"Update {v} installed. Restart now?", "Restart", "Later", Restart);
             });
         });
@@ -295,6 +298,8 @@ internal static class AutoUpdate
 
     private static bool Install(byte[] dll, byte[] sig, Version current, string tag, bool anyVersion)
     {
+        // Test runs never replace the mod under test (a scripted popup answer once installed the published release).
+        if (TestHarness.HasArgs) { Plugin.Log.LogWarning($"[update] test run: {tag} not installed (acting as if it was)"); return true; }
         string dir = PluginDir();
         if (dir == null) return false;
         string target = Path.Combine(dir, DllName), staged = target + ".new", old = target + ".old";

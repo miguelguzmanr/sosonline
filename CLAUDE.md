@@ -22,7 +22,7 @@ Determinism is the whole game: anything a PC reads that isn't synced input or sy
 - **Never touch the game folder while the user is playing.** Check that `SeaOfStars` isn't running before building, deploying or testing: `dotnet build` deploys into the game folder by default (pass `-p:DeployToGame=false` for a compile check).
 - **Never touch the user's real saves.** Tests play from sandbox copies (`SosOnlineTest-*`). Delete `SosOnlineTest-*` and `SosOnlineSession-<port>` in `%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars` afterwards; never `SosOnlineSession` or `SosOnlineBackup`.
 - **Before a release:** a full sweep (`tests/sweep.sh`, about 50 minutes). If a sweep already ran that day and only a small fix landed since, test what the fix touches.
-- **Player-facing text:** short. Toasts at most 80 characters, popup choices at most about 25. Add or change strings in `docs/messages.csv` first; the user reviews wording there.
+- **Player-facing text:** short. Toasts at most 80 characters, popup choices at most about 25. A one-sentence toast has no final period ("Robin joined"); periods only between two or more sentences; "!" stays. Add or change strings in `docs/messages.csv` first; the user reviews wording there.
 - **Keep the game's own behaviour** where it has one (two players may pick the same character; save slots keep "Slot N").
 - **Guard user-supplied text** (player names) against length and special characters.
 - **Public repo** (`miguelguzmanr/sosonline`): keep Steam names out of commits, docs and screenshots (they appear in logs).
@@ -161,7 +161,7 @@ The menus use the game's own widgets, so they look, sound and navigate like the 
 - **Title screen:**
   - An **Online** entry, copied from the Options button.
   - Choosing it swaps the title list for the co-op entries, with a status line under them.
-  - Entries: **Host**, **Join** (friends who are hosting), **Start** (pick the save), **Invite friends** (Steam overlay), **Input delay**, **Stop hosting** / **Leave co-op**, **Send logs to host** / **Ask for logs**, **Open to friends**, **Open logs folder**, **Back**. Once an update is downloaded, **Restart to update (0.1.45 -> 0.1.46)** comes first.
+  - Entries: **Host**, **Join** (friends who are hosting), **Load Game** (pick the save), **Invite Friends** (Steam overlay), **Stop Hosting** / **Leave Co-op**, **Options**, **Back**. **Options** holds **Input Delay**, **Open to Friends**, **Check for Updates**, **Send Logs to Host** / **Ask for Logs** and **Open Logs Folder**, so the list and its status lines stay above the game's copyright row (the status is hidden on a page long enough to reach it). Entries are in Title Case. B puts the cursor on **Back**; B on **Back** goes back, and the cursor lands on the entry that opened the page. Once an update is downloaded, **Restart to Update (0.45 -> 0.46)** comes first.
 - **Pause menu:**
   - An **Online** item, added with the game's own `PauseMenu.AddPauseMenuItem`.
   - It opens the game's standard two-choice popup.
@@ -199,7 +199,7 @@ Updates are manual since 2026-11-17 (`Update/AutoUpdate.cs`); before, the mod do
 - **At start** the mod only looks up the [latest release](https://github.com/miguelguzmanr/sosonline/releases/latest) (one request to `api.github.com`; not in test runs). If it's newer, `AutoUpdate.Available` is set.
 - **Title screen version line** (`UI/VersionLabel.cs`): *Online Co-op Version 0.56*, plus *(Update available)*, bottom-left. It's a copy of the game's own version text (`VersionInfo`), moved to the root canvas (the game's line sits in a layout group) and mirrored: as far from the left edge as the game's drawn text is from the right edge, same bottom.
 - **Versions as players see them:** `AutoUpdate.Display` shows 0.1.56 as "0.56" (releases are always 0.1.&lt;commit count&gt;). Logs and assembly versions keep the full 0.1.56.
-- **Check for updates** (title screen → Online) looks up the release and asks: *Up to date (0.56).*, or *Update 0.57 is available.* → Install / Back. It downloads the zip and installs the DLL only if its signature matches the release key built into the mod (the running DLL is renamed to `.old`; nothing downloaded is loaded in the running game). On a locally modified build (`…-modified`) it offers the published release even when that isn't newer.
+- **Check for Updates** (title screen → Online → Options) looks up the release and asks: *Up to date (0.56).*, or *Update 0.57 is available.* → Install / Back. It downloads the zip and installs the DLL only if its signature matches the release key built into the mod (the running DLL is renamed to `.old`; nothing downloaded is loaded in the running game). On a locally modified build (`…-modified`) it offers the published release even when that isn't newer.
 - **Restart to update (0.56 -> 0.57)** then appears in the Online menu (and **Restart** in the pause menu's Online popup, outside a running session). It quits the game; a hidden PowerShell waits for it to exit and starts it again through Steam (`steam://rungameid/1244090`).
 - If someone joins with a different version, the host refuses them and names both versions.
 - The old `AutoUpdate` setting in `BepInEx\config\sosonline.coop.cfg` is no longer read.
@@ -290,6 +290,7 @@ Close the game first; builds deploy into the game folder, and a build during a t
 
 Notes:
 - Battle bugs need `--sosonline-lag`/`--sosonline-jitter`: loopback hides real-time dependence.
+- **Save slot numbers count from 0.** `--sosonline-start=SLOT[a]` and `--sosonline-play=SLOT` take the file number, not the number the game shows: the game's "Slot 1" is `0` (`SOS_SaveSlot0.sos`; with `a`, `Autosave_SOS_SaveSlot0.sos`), "Slot 2" is `1`, and so on. A slot with no file fails with `Save slot N (auto=…) not found` and the test starts nothing. When the user names a slot, subtract one, and check the file exists in `%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars` first.
 - Tests run from the user's newest save (`--sosonline-start=0a`, `--sosonline-play=0`), so what they reach changes when the user plays. STATUS.md notes where that save currently is (area, encounter frame, nearest campfire).
 - Run hygiene: `tests/display-prefs.sh save`/`restore` around tests; delete `SosOnlineTest-*` and `SosOnlineSession-<port>` in `%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars` afterwards, never `SosOnlineSession` or `SosOnlineBackup`.
 - Choose local pause entries by label (`--sosonline-pausechoose=1760:Leave_co-op,1800:Leave`), not by cursor moves: the entry list changes.
@@ -308,11 +309,11 @@ Notes:
 The README has the short version for players; this is the complete one.
 
 **Start from your own game (no title screen).**
-1. **Host:** pause → **Online** → **Open**. A Steam lobby stays open while you play (also on the next start: it's a setting, toggled in the title screen's **Online** menu). **Invite friends** opens the Steam overlay.
+1. **Host:** pause → **Online** → **Open**. A Steam lobby stays open while you play (also on the next start: it's a setting, toggled in the title screen's **Online** → **Options**). **Invite friends** opens the Steam overlay.
 2. **Friend:** accept the invite, or use **Join Game** in the Steam friends list. From the title screen, **Online** → **Join a friend** works too. Accepting while in your own game asks once, then replaces your game with the host's.
 3. The friend drops in at the next moment the game allows saving (no battle, cutscene or loading): either they catch up on their own PC while the host keeps playing, or everyone sees a short fade. Then they take a party member automatically.
 
-**Or start together from the title screen:** Title screen → **Online** → **Host**, friends join, then **Start** and pick a save.
+**Or start together from the title screen:** Title screen → **Online** → **Host**, friends join, then **Load Game** and pick a save.
 
 **During a session:**
 - **Pause** (Start / Esc) opens a pause screen on your PC only; the game keeps running for everyone and the others see "P2 is paused". It has **Options** (volumes, brightness, display: this PC only), **Pause for everyone** and **Leave co-op** (the host: **End co-op** for everyone). In battles and cutscenes the game's own pause still stops everyone.
@@ -322,7 +323,7 @@ The README has the short version for players; this is the complete one.
 - **Ending:** the host's pause → **End co-op**. Everyone keeps playing on their own; the lobby closes and **Open to friends** turns off.
 - **Camping** works as in local co-op (tested on loopback: intro, camp, Rest and the end of camp on the same frames on both PCs).
 - If a friend's game gets out of sync, it fixes itself: small differences (HP, MP, combo points, positions) are corrected in place; otherwise their PC rejoins by replaying the area behind a loading screen (a few seconds, even mid-battle), or, if that can't work, with a short reload once the game allows saving. Nobody else waits.
-- **Check for updates** (title screen, Online): looks for a newer release now and asks before installing it; on a locally modified build it offers the published release instead, so the PC is back on a build everyone has. Then Restart (through Steam) or Later.
+- **Check for Updates** (title screen, Online → Options): looks for a newer release now and asks before installing it; on a locally modified build it offers the published release instead, so the PC is back on a build everyone has. Then Restart (through Steam) or Later.
 - **Return to area start** (host): while a friend waits to join where the game doesn't allow saving (a battle, a cutscene), the host's pause screen offers only this, Back and, outside battles, Pause for everyone (the game has no pause in battles). Everyone goes back to how things were on entering the area, and the friend joins right away; progress since then is lost.
 
 Use a gamepad or keyboard; the mouse is not synchronized. Saves made during co-op are written by the host as usual. On guests they go to a separate session folder, so the guests' own saves are never touched and the host keeps the shared progress. Options stay each PC's own.
@@ -341,11 +342,11 @@ Nothing Steam-specific has been tested end to end yet (see *Not yet verified* in
 
 Every start of the game writes its own log, so nothing is lost when you restart.
 
-**Friends: press a button.** While connected to the host's session (also after a crash: rejoin first), choose **Send logs to host**. It's on the pause screen (Esc, outside battles and cutscenes) and in the title screen's **Online** menu. Your game zips your last two starts' logs and BepInEx's `LogOutput.log` (which also has the game's own messages), and sends them to the host only. If the game crashed since, the zip also includes the newest Windows crash dump of the game (`%LOCALAPPDATA%\CrashDumps\SeaOfStars.exe.*.dmp`, a snapshot of the game's memory at the crash). The host gets a toast and the zip in `BepInEx\SosOnline\logs\received`. The host can also choose **Ask for logs**, which shows friends a reminder; they still decide.
+**Friends: press a button.** While connected to the host's session (also after a crash: rejoin first), choose **Send logs to host**. It's on the pause screen (Esc, outside battles and cutscenes) and in the title screen's **Online** → **Options**. Your game zips your last two starts' logs and BepInEx's `LogOutput.log` (which also has the game's own messages), and sends them to the host only. If the game crashed since, the zip also includes the newest Windows crash dump of the game (`%LOCALAPPDATA%\CrashDumps\SeaOfStars.exe.*.dmp`, a snapshot of the game's memory at the crash). The host gets a toast and the zip in `BepInEx\SosOnline\logs\received`. The host can also choose **Ask for logs**, which shows friends a reminder; they still decide.
 
 **By hand** (the host's own logs, or without a session), from the same session on **both PCs**:
 
-1. Open the logs folder: press **F8** in game → **Open logs folder**, or title screen → **Online** → **Open logs folder**. It is `BepInEx\SosOnline\logs` in the game folder.
+1. Open the logs folder: press **F8** in game → **Open logs folder**, or title screen → **Online** → **Options** → **Open Logs Folder**. It is `BepInEx\SosOnline\logs` in the game folder.
 2. Send the newest `sosonline-<date-time>.log` and `state-<date-time>.log` (the file names carry when the game was started). If you restarted the game since the problem, take the pair from that earlier start; the last 10 starts are kept.
 3. Say roughly what happened and when (the log lines carry the time of day).
 4. If the game crashed, also send `BepInEx\LogOutput.log` from the game folder (it has the game's own messages) and the newest `SeaOfStars.exe.*.dmp` from `%LOCALAPPDATA%\CrashDumps\` (Windows' crash dump of the game). Sea of Stars writes no `Player.log`.

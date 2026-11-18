@@ -138,7 +138,7 @@ internal static class GameBridge
         var saves = Saves;
         if (saves == null) { Plugin.Log.LogError("SaveManager not available"); return false; }
         var slot = autoSave ? saves.GetAutoSaveSlot(slotIndex) : saves.GetSaveSlot(slotIndex);
-        if (slot == null) { Plugin.Log.LogError($"Save slot {slotIndex} (auto={autoSave}) not found"); return false; }
+        if (slot == null) { Plugin.Log.LogError($"Save slot {slotIndex} (auto={autoSave}) not found: no {(autoSave ? "Autosave_" : "")}SOS_SaveSlot{slotIndex}.sos. Slots are counted from 0 (the game's \"Slot 1\" is 0)."); return false; }
         saves.LoadSaveSlotAndSetLastIndex(slot);
         var title = FindTitleScreen();
         if (title == null) { Plugin.Log.LogError("Title screen not active"); return false; }
@@ -465,7 +465,7 @@ internal static class GameBridge
             try
             {
                 if (saves.GetSaveSlot(i) != null) result.Add((i, false, $"Slot {i + 1}"));
-                if (saves.GetAutoSaveSlot(i) != null) result.Add((i, true, $"Slot {i + 1} (autosave)"));
+                if (saves.GetAutoSaveSlot(i) != null) result.Add((i, true, $"Slot {i + 1} (Autosave)"));
             }
             catch { }
         }

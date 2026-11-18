@@ -2,13 +2,13 @@
 
 Current state of the project, for whoever picks it up next. Update it at the end of every working session: replace what changed, don't append a diary. Technical background is in [CLAUDE.md](CLAUDE.md); causes and fixes in detail are in [docs/FINDINGS.md](docs/FINDINGS.md), the drop-in plan and its progress in [docs/PLAN.md](docs/PLAN.md).
 
-*Last updated: 2026-11-17.*
+*Last updated: 2026-11-18.*
 
 ## State right now
 
 - **Branch:** `main`, pushed: the docs housekeeping, manual updates with the title-screen version line, renamed tools, and the game folder found by `tools/game-dir.ps1`. None of it is released yet.
 - **Latest release:** `v0.1.56` (`844ff2f`), published 2026-11-17. Earlier ones still around: `v0.1.53`, `v0.1.52` (has the controller crash below), `v0.1.45`.
-- **Installed on the user's PC:** a test build of the manual-updates change (`…-modified`), deployed by the version-line tests.
+- **Installed on the user's PC:** a test build (`…-modified`) with the Online-page popup fixes below (uncommitted).
 - **Updates are manual from the next release on.** v0.1.56 and older still download a newer release at start, so the friend (P2) gets the next release automatically one last time; after that, *(Update available)* on the title screen and *Check for updates*.
 - **Test save:** tests run from the user's newest save (`--sosonline-start=0a`). Last known: the Forbidden Cavern, Bosslug fight at `ENCOUNTER=650`, a campfire 8 m from the start. It changes whenever the user plays.
 
@@ -18,15 +18,18 @@ From the first session on v0.1.53 (user's report, 2026-11-16 late): the Bosslug 
 
 1. **The rejoin loop.** Read the two logs the friend sent (`BepInEx\SosOnline\logs\received\*-20261116-225803.zip` and `*-20261116-230629.zip`: their session and state logs from 22:39) next to the host's logs of the same time (`BepInEx\SosOnline\logs\sosonline-20261116-2239*.log`, `state-*`).
 2. **The fishing minigame desynced.**
-3. **The first battle with Garl in the party desynced.** A title-menu test overwrote the host's `Autosave_SOS_SaveSlot0.sos` twice (2026-11-16 23:26, 23:30). The friend's mirror (`%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars\SosOnlineSession\Autosave_SOS_SaveSlot0.sos`) may still hold the autosave; the user will ask for it. Every test run is sandboxed since (`SosOnlineTest-steam` for non-UDP runs).
-4. **Verify over Steam with the friend:** a re-sync during a battle (catch-up log blocks over the relay), a lost battle (game over) while a friend waits to join, windows of different sizes (logic clipping, item 6), **Return to area start** (the area save goes to playing guests in one ~25 KB message), and **Later** on the *Check for updates* popup (the test helper couldn't press it).
-5. **Party AI after a leave mid-battle replays differently now and then.** A second re-sync in the same area replays the guest's first leave; once, the AI's Valere moved 3.3 m differently right after it (f1680). Falls back to the reload. Next: call-probe the party AI between the leave and the next turn.
-6. **Logic clipping** (`LogicClippingManager`): off-screen NPC logic is paused by camera frustum. A replay sees the Bosslug a snapshot early (f390, never two in a row). Turning clipping off broke replays. Might also differ live between PCs with different window sizes.
-7. **Return to area start in a cutscene** (with *Pause for everyone*) is untested: camping in the test save still allows saving.
-8. **Test scripts should always save and restore display prefs** (`tests/display-prefs.sh`); single test runs left the game at 960x540 windowed.
-9. Older, not touched: guest crash after a re-sync in a battle (no repro; the log zip now includes the crash dump); `Session.MinAutoDelay` 4 (consider 2 after a stable Steam session); folded methods not covered by the deterministic-random wrappers (`CombatActor.OnPlayerPartyTurnDone`, `OnAnyCharacterTurnDone`, `OnPlayerCharacterTurnDone`, `OnEnemyCharacterTurnDone`); probes (turn, damage, clock lines) stay until battles are confirmed over Steam.
+3. **The first battle with Garl in the party desynced.** A title-menu test overwrote the host's `Autosave_SOS_SaveSlot0.sos` twice (2026-11-16 23:26, 23:30). The friend's mirror (`%USERPROFILE%\AppData\LocalLow\Sabotage Studio\Sea of Stars\SosOnlineSession\Autosave_SOS_SaveSlot0.sos`) may still hold the autosave; the user will ask for it. Checked 2026-11-17: no copy with Garl on the host PC. Both local slot-0 files, Steam Cloud (same checksums, synced 23:30:53) and the copies in Downloads hold the Forbidden Cavern state (Zale and Valere, level 2). Windows shadow copies need admin (Explorer → the save folder → Properties → Previous Versions). Every test run is sandboxed since (`SosOnlineTest-steam` for non-UDP runs).
+4. **Look at the reorganised Online page** (installed, tested with screenshots on UDP): *Load Game* instead of *Start*, Title Case, an *Options* sub-page (Input Delay, Open to Friends, Check for Updates, Send/Ask for Logs, Open Logs Folder), Back returns to the entry that opened the page, and the status lines hide on a page long enough to reach the copyright (six saves). On Options the status lines describe the highlighted entry (texts in docs/messages.csv, rows 261–267, for review); autosaves read *Slot 1 (Autosave)*. Not seen yet: hosting over Steam (adds Invite Friends) and a Join page full of friends.
+5. **Verify over Steam with the friend:** a re-sync during a battle (catch-up log blocks over the relay), a lost battle (game over) while a friend waits to join, windows of different sizes (logic clipping, item 7), **Return to area start** (the area save goes to playing guests in one ~25 KB message), and **Later** on the *Check for updates* popup (the test helper couldn't press it).
+6. **Party AI after a leave mid-battle replays differently now and then.** A second re-sync in the same area replays the guest's first leave; once, the AI's Valere moved 3.3 m differently right after it (f1680). Falls back to the reload. Next: call-probe the party AI between the leave and the next turn.
+7. **Logic clipping** (`LogicClippingManager`): off-screen NPC logic is paused by camera frustum. A replay sees the Bosslug a snapshot early (f390, never two in a row). Turning clipping off broke replays. Might also differ live between PCs with different window sizes.
+8. **Return to area start in a cutscene** (with *Pause for everyone*) is untested: camping in the test save still allows saving.
+9. **Test scripts should always save and restore display prefs** (`tests/display-prefs.sh`); single test runs left the game at 960x540 windowed.
+10. Older, not touched: guest crash after a re-sync in a battle (no repro; the log zip now includes the crash dump); `Session.MinAutoDelay` 4 (consider 2 after a stable Steam session); folded methods not covered by the deterministic-random wrappers (`CombatActor.OnPlayerPartyTurnDone`, `OnAnyCharacterTurnDone`, `OnPlayerCharacterTurnDone`, `OnEnemyCharacterTurnDone`); probes (turn, damage, clock lines) stay until battles are confirmed over Steam.
 
 ## Recently done
+
+- **Not committed yet (2026-11-18):** the title screen's Online page and its popups. B on one of the mod's popups now chooses its last choice (Back, Later, OK): the game's own Back only moved the popup's cursor, the selection then went to the menu behind, and the unanswered popup blocked every later one (they showed as toasts). After a popup the cursor goes back to the entry that opened it; the page redraws once a check finishes (it kept *Checking for updates…*). B on the page puts the cursor on *Back*; B on *Back* goes back (confirmed by the user with a pad). A local build shows its version as *0.58-modified*. Test runs never install a release (a scripted answer once replaced the test build with v0.1.56), and the test helper's popup answers choose the right button.
 
 - **Not released yet:** updates are manual (only a lookup at start, no download); *Online Co-op Version 0.57* in the title screen's bottom-left, mirroring the game's version line, with *(Update available)* when there is a newer release. Versions show as 0.57 instead of 0.1.57. Tested on the title screen (screenshots, both texts); *Check for updates* itself is unchanged apart from the version format.
 

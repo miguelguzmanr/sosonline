@@ -34,7 +34,7 @@ You need Sea of Stars on Steam (Windows) and `SosOnline-<version>.zip` from the 
 
 The bottom-left corner of the title screen shows the mod's version, e.g. *Online Co-op Version 0.56*, and adds *(Update available)* when there's a newer release. Nothing is downloaded until you ask:
 
-1. Title screen → **Online** → **Check for updates** → **Install**. The update is installed only if its signature matches.
+1. Title screen → **Online** → **Options** → **Check for Updates** → **Install**. The update is installed only if its signature matches.
 2. **Restart** (through Steam), or **Later**: it runs from the next start.
 
 At start the mod makes one request to GitHub to see whether there's a newer release; nothing personal is sent.
@@ -56,7 +56,7 @@ At start the mod makes one request to GitHub to see whether there's a newer rele
 2. **Friend:** accept the invite, or use **Join Game** in the Steam friends list.
 3. The friend drops in at the next moment the game allows saving (not in a battle, cutscene or loading), then takes a party member automatically.
 
-**Or start together:** title screen → **Online** → **Host**; friends join, then **Start** and pick a save.
+**Or start together:** title screen → **Online** → **Host**; friends join, then **Load Game** and pick a save.
 
 **During a session:**
 - **Pause** (Start / Esc) pauses only your screen; the game keeps running for everyone. **Pause for everyone** opens the game's own pause menu on every PC, e.g. for **Assign Players** (choose who plays whom).
@@ -73,9 +73,9 @@ At start the mod makes one request to GitHub to see whether there's a newer rele
 
 ## Something went wrong?
 
-**Friends:** choose **Send logs to host** (pause screen, or title screen → **Online**). Your game sends your recent logs, and a crash dump if the game crashed, to the host only.
+**Friends:** choose **Send logs to host** (pause screen, or title screen → **Online** → **Options**). Your game sends your recent logs, and a crash dump if the game crashed, to the host only.
 
-**Host:** press **F8** → **Open logs folder** (or title screen → **Online** → **Open logs folder**), and attach the newest `sosonline-*.log` and `state-*.log` to an [issue](https://github.com/miguelguzmanr/sosonline/issues), with roughly what happened and when. The logs contain the Steam names of the players in the session; nothing else personal.
+**Host:** press **F8** → **Open logs folder** (or title screen → **Online** → **Options** → **Open Logs Folder**), and attach the newest `sosonline-*.log` and `state-*.log` to an [issue](https://github.com/miguelguzmanr/sosonline/issues), with roughly what happened and when. The logs contain the Steam names of the players in the session; nothing else personal.
 
 ## Credits
 
